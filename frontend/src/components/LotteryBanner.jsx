@@ -175,17 +175,4 @@ export function LotteryBanner({
     );
 }
 
-// Add shimmer animation to CSS (should be in index.css, but defining inline for portability)
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes shimmer {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(50%); }
-    }
-`;
-if (!document.querySelector('style[data-lottery-banner]')) {
-    style.setAttribute('data-lottery-banner', 'true');
-    document.head.appendChild(style);
-}
-
 export default LotteryBanner;

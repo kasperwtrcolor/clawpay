@@ -7,7 +7,7 @@ import { useWassy } from './hooks/useWassy';
 import './index.css';
 
 // Components
-import { LoginScreen, LoadingScreen } from './components/LoginScreen';
+import LoginScreen, { LoadingScreen } from './components/LoginScreen';
 import { WalletCard } from './components/WalletCard';
 import { PendingClaims } from './components/PendingClaims';
 import { PendingOutgoing } from './components/PendingOutgoing';
@@ -345,7 +345,7 @@ export default function App() {
         appearance: {
           theme: 'dark',
           accentColor: '#31d7ff',
-          logo: '/favicon.jpg',
+          logo: '/favicon.png',
           walletChainType: 'solana-only'
         },
         embeddedWallets: {
