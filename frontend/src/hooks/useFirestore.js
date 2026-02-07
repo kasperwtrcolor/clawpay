@@ -49,6 +49,7 @@ export function useFirestore(walletAddress, xUsername) {
     const [userProfile, setUserProfile] = useState(null);
     const [leaderboard, setLeaderboard] = useState({ topSenders: [], topClaimers: [] });
     const [loading, setLoading] = useState(true);
+    const [agentLogs, setAgentLogs] = useState([]);
 
     // Initialize or get user profile
     const initializeUser = useCallback(async () => {
@@ -580,6 +581,26 @@ export function useFirestore(walletAddress, xUsername) {
         }
     }, [currentLottery, fetchActiveLottery]);
 
+    // Listen to Agent Logs
+    useEffect(() => {
+        const logsRef = collection(db, 'agent_logs');
+        const q = query(logsRef, orderBy('createdAt', 'desc'), limit(15));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const logs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                // Helper for UI formatting
+                time: doc.data().createdAt?.toDate?.().toLocaleTimeString([], { hour12: false }) || '...'
+            }));
+            setAgentLogs(logs);
+        }, (err) => {
+            console.error('Agent logs listener error:', err);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
 
 
     return {
@@ -604,7 +625,10 @@ export function useFirestore(walletAddress, xUsername) {
         fetchLotteryHistory,
         setLotteryPrize,
         drawLotteryWinner,
-        claimLotteryPrize
+        claimLotteryPrize,
+
+        // Agent Logs
+        agentLogs
     };
 
 }

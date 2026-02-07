@@ -1,36 +1,17 @@
 import { useState, useEffect } from 'react';
 import '../index.css';
 
-export function AgentLogFeed() {
-    const [logs, setLogs] = useState([
-        { id: 1, time: '14:20:01', type: 'SCAN', msg: 'Analyzing @SolanaConf swarm engagement...' },
-        { id: 2, time: '14:20:15', type: 'INTENT', msg: 'Detected high-vibe interaction from @cryptouser.' },
-        { id: 3, time: '14:20:30', type: 'ACTION', msg: 'Attributing $5 reward to @cryptouser via SOCIAL_PULSE.' },
-        { id: 4, time: '14:21:05', type: 'SYST', msg: 'Entropy levels nominal. Evolving sentiment weights.' },
-    ]);
-
-    // Simple simulation of live logs
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const types = ['SCAN', 'INTENT', 'ACTION', 'SYST'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            const newLog = {
-                id: Date.now(),
-                time: new Date().toLocaleTimeString([], { hour12: false }),
-                type,
-                msg: `Autonomous process ${Math.random().toString(36).substring(7)} executed successfully.`
-            };
-            setLogs(prev => [newLog, ...prev.slice(0, 4)]);
-        }, 5000);
-        return () => clearInterval(interval);
-    }, []);
+export function AgentLogFeed({ logs = [] }) {
+    const displayLogs = logs.length > 0 ? logs : [
+        { id: 'initial', time: '...', type: 'SYST', msg: 'Synchronizing with CLAW_BRAIN...' }
+    ];
 
     return (
         <div className="glass-panel" style={{ marginBottom: '30px' }}>
             <div className="label-subtle" style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>// AGENT_LIVE_LOGS</div>
             <div className="inset-panel" style={{ marginTop: '20px', background: '#000', color: 'var(--accent-secondary)', padding: '15px' }}>
                 <div style={{ maxHeight: '150px', overflowY: 'hidden', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {logs.map(log => (
+                    {displayLogs.map(log => (
                         <div key={log.id} className="mono" style={{ fontSize: '0.7rem', display: 'flex', gap: '10px' }}>
                             <span style={{ opacity: 0.5 }}>[{log.time}]</span>
                             <span style={{

@@ -72,7 +72,8 @@ function WassyPayApp() {
     fetchLotteryHistory,
     setLotteryPrize: setLotteryPrizeApi,
     drawLotteryWinner,
-    claimLotteryPrize
+    claimLotteryPrize,
+    agentLogs
   } = useWassy();
 
 
@@ -242,7 +243,7 @@ function WassyPayApp() {
             <div className="grid-2">
               <div>
                 <AgentTreasuryCard />
-                <AgentLogFeed />
+                <AgentLogFeed logs={agentLogs} />
                 <ClawSkills />
               </div>
 

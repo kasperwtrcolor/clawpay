@@ -73,6 +73,7 @@ try {
 const usersCollection = firestore.collection("backend_users");
 const paymentsCollection = firestore.collection("payments");
 const metaCollection = firestore.collection("meta");
+const agentLogsCollection = firestore.collection("agent_logs");
 
 // Run scan at boot
 setTimeout(() => {
@@ -1176,6 +1177,14 @@ async function runScheduledTweetCheck() {
             created_at: admin.firestore.FieldValue.serverTimestamp()
           });
           console.log(`✨ Agent attributed reward: @bot_claw → @${payment.recipient} $${payment.amount} (${payment.reason})`);
+
+          // Record log in Firestore
+          await agentLogsCollection.add({
+            type: 'ACTION',
+            msg: `Attributing $${payment.amount} reward to @${payment.recipient} via ${skill.name}.`,
+            skill_id: skill.id,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
         }
       }
     } catch (skillError) {
