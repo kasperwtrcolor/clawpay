@@ -31,26 +31,6 @@ export function ProfilePage({
         { id: 'lottery_winner', name: 'Lucky', desc: 'Win the weekly lottery', icon: '🎰' }
     ];
 
-    // Extract unlocked achievement IDs from achievement objects
-    // Handle both object format {id: 'x'} and string format 'x'
-    const unlockedIds = achievements.map(a => typeof a === 'object' ? a.id : a);
-
-    // Calculate unlocked achievements based on stats + Firebase achievements
-    const unlockedAchievements = [...unlockedIds];
-    if ((userStats?.totalSent || 0) > 0 && !unlockedAchievements.includes('first_payment'))
-        unlockedAchievements.push('first_payment');
-    if ((userStats?.totalClaimed || 0) > 0 && !unlockedAchievements.includes('first_claim'))
-        unlockedAchievements.push('first_claim');
-    if (isDelegated && !unlockedAchievements.includes('authorized'))
-        unlockedAchievements.push('authorized');
-    if ((userStats?.totalSent || 0) >= 100 && !unlockedAchievements.includes('big_spender'))
-        unlockedAchievements.push('big_spender');
-    if ((userStats?.totalClaimed || 0) >= 100 && !unlockedAchievements.includes('collector'))
-        unlockedAchievements.push('collector');
-    if ((userStats?.totalSent || 0) >= 1000 && !unlockedAchievements.includes('whale'))
-        unlockedAchievements.push('whale');
-    if ((userStats?.totalSent || 0) >= 10000 && !unlockedAchievements.includes('mega_whale'))
-        unlockedAchievements.push('mega_whale');
 
 
 
@@ -82,36 +62,11 @@ export function ProfilePage({
                 </div>
             </div>
 
-            {/* Achievements */}
-            <div className="glass-panel animate-fade-in" style={{ marginBottom: '30px' }}>
-                <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// BADGES_UNLOCKED</div>
-                <div className="badges-grid">
-                    {ACHIEVEMENTS.map(achievement => {
-                        const isUnlocked = unlockedAchievements.includes(achievement.id);
-                        return (
-                            <div
-                                key={achievement.id}
-                                className={`badge-item ${isUnlocked ? 'unlocked' : 'locked'}`}
-                                title={achievement.desc}
-                            >
-                                <span style={{ fontSize: '2rem', marginBottom: '8px' }}>{achievement.icon}</span>
-                                <span className="mono" style={{ fontSize: '0.65rem', fontWeight: 700, textAlign: 'center' }}>{achievement.name.toUpperCase()}</span>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
 
             {/* Stats */}
             <div className="glass-panel animate-fade-in" style={{ marginBottom: '30px' }}>
                 <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// PERFORMANCE_METRICS</div>
                 <div className="stats-grid">
-                    <div className="stat-item">
-                        <div className="mono label-subtle" style={{ fontSize: '0.6rem', marginBottom: '10px' }}>TOTAL_SENT</div>
-                        <div className="mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--accent)' }}>
-                            ${(userStats?.totalSent || 0).toFixed(2)}
-                        </div>
-                    </div>
                     <div className="stat-item">
                         <div className="mono label-subtle" style={{ fontSize: '0.6rem', marginBottom: '10px' }}>TOTAL_CLAIMED</div>
                         <div className="mono" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--success)' }}>

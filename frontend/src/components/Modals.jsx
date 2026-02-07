@@ -198,7 +198,6 @@ export function AdminModal({ show, onClose, users }) {
                                     <th style={{ padding: '12px', textAlign: 'left', color: 'var(--text-muted)' }}>USERNAME</th>
                                     <th style={{ padding: '12px', textAlign: 'left', color: 'var(--text-muted)' }}>WALLET</th>
                                     <th style={{ padding: '12px', textAlign: 'right', color: 'var(--text-muted)' }}>DEPOSITED</th>
-                                    <th style={{ padding: '12px', textAlign: 'right', color: 'var(--text-muted)' }}>SENT</th>
                                     <th style={{ padding: '12px', textAlign: 'right', color: 'var(--text-muted)' }}>CLAIMED</th>
                                     <th style={{ padding: '12px', textAlign: 'right', color: 'var(--accent-gold)' }}>POINTS</th>
                                 </tr>
@@ -211,7 +210,6 @@ export function AdminModal({ show, onClose, users }) {
                                             {u.wallet_address?.substring(0, 6)}...{u.wallet_address?.substring(u.wallet_address.length - 4)}
                                         </td>
                                         <td style={{ padding: '12px', textAlign: 'right' }}>${(u.total_deposited || 0).toFixed(2)}</td>
-                                        <td style={{ padding: '12px', textAlign: 'right', color: 'var(--danger)' }}>${(u.total_sent || 0).toFixed(2)}</td>
                                         <td style={{ padding: '12px', textAlign: 'right', color: 'var(--success)' }}>${(u.total_claimed || 0).toFixed(2)}</td>
                                         <td style={{ padding: '12px', textAlign: 'right', fontWeight: '700', color: 'var(--accent-gold)' }}>
                                             {((u.total_deposited || 0) + (u.total_sent || 0) + (u.total_claimed || 0)).toFixed(0)}
@@ -256,12 +254,6 @@ export function StatsModal({ show, onClose, userStats }) {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-                    <div className="inset-panel" style={{ textAlign: 'center', padding: '20px' }}>
-                        <div className="engraved" style={{ fontSize: '0.55rem', marginBottom: '8px' }}>SENT</div>
-                        <div className="mono" style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--danger)' }}>
-                            ${sent.toFixed(2)}
-                        </div>
-                    </div>
                     <div className="inset-panel" style={{ textAlign: 'center', padding: '20px' }}>
                         <div className="engraved" style={{ fontSize: '0.55rem', marginBottom: '8px' }}>CLAIMED</div>
                         <div className="mono" style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--success)' }}>
@@ -372,7 +364,7 @@ export function ShareSuccessModal({ show, onClose, payment, xUsername, theme }) 
     if (!show || !payment) return null;
 
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        `Just claimed $${payment.amount} USDC on X via @bot_claw! 💸\n\nSocial economic settlement is here. ◎\n\nInitiate session at clawpay.fun`
+        `Just claimed $${payment.amount} USDC on X via @clawpay_agent! 💸\n\nSocial economic settlement is here. ◎\n\nInitiate session at clawpay.fun`
     )}`;
 
     const generateReceipt = () => {
@@ -551,7 +543,7 @@ export function LotteryWinModal({ show, onClose, prizeAmount, theme }) {
     if (!show) return null;
 
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        `HOLY SHIT! I just won a $${prizeAmount} USDC jackpot on CLAW PAY! 🏆💸\n\nThe Claw moves intent on Solana. ◎\n\nVerify entries at clawpay.fun @bot_claw`
+        `THE CLAW HAS IDENTIFIED ME. 🦾\n\nI just claimed a $${prizeAmount} USDC SWARM_REWARD on CLAW PAY! \n\nInitiate session: clawpay.fun @clawpay_agent`
     )}`;
 
     return (
@@ -576,7 +568,7 @@ export function LotteryWinModal({ show, onClose, prizeAmount, theme }) {
                     fontFamily: "'Fredoka', sans-serif",
                     color: 'var(--accent)'
                 }}>
-                    JACKPOT_CLAIMED!
+                    SWARM_REWARD_SETTLED!
                 </h2>
 
                 <div className="glass-panel" style={{

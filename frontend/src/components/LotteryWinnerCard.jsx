@@ -20,7 +20,7 @@ export function LotteryWinnerCard({
     // Share on X
     const handleShareOnX = () => {
         setIsSharing(true);
-        const text = `I JUST WON THE $${lottery.prizeAmount} CLAW PAY JACKPOT! 🏆\n\nThe Claw moves intent on Solana. ◎\n\nInitiate session at clawpay.fun @bot_claw`;
+        const text = `THE CLAW HAS IDENTIFIED ME. 🦾\n\nI just claimed a $${lottery.prizeAmount} SWARM_REWARD on CLAW PAY! \n\nInitiate session: clawpay.fun @clawpay_agent`;
         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank', 'width=550,height=420');
         setIsSharing(false);
@@ -94,7 +94,7 @@ export function LotteryWinnerCard({
                         marginBottom: '5px',
                         fontFamily: "'Fredoka', sans-serif"
                     }}>
-                        LOTTERY WINNER
+                        SWARM_IDENTIFIED
                     </div>
 
                     {/* Username */}
@@ -120,7 +120,7 @@ export function LotteryWinnerCard({
                             color: 'rgba(0,0,0,0.6)',
                             marginBottom: '5px'
                         }}>
-                            PRIZE WON
+                            REWARD_SETTLED
                         </div>
                         <div style={{
                             fontSize: '3rem',

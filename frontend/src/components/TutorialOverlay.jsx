@@ -19,7 +19,7 @@ const TUTORIAL_STEPS = [
         id: 'howto',
         selector: '.howto-card',
         title: '🐦 How to Pay',
-        description: 'Send payments by tweeting! Mention @bot_claw with the recipient and amount. Example: "@bot_claw send @friend $5"',
+        description: 'Send payments by tweeting! Mention @clawpay_agent with the recipient and amount. Example: "@clawpay_agent send @friend $5"',
         position: 'left'
     },
     {

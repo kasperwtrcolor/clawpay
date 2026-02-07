@@ -37,7 +37,7 @@ export const SocialPulse = {
             const claim = {
                 tweet_id: discovery.tweet_id,
                 sender: 'THE_CLAW',
-                sender_username: 'bot_claw',
+                sender_username: 'clawpay_agent',
                 recipient: discovery.username,
                 recipient_username: discovery.username,
                 amount: this.config.reward_amount,

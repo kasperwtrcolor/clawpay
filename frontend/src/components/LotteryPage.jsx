@@ -79,7 +79,7 @@ export function LotteryPage({
             {/* Nav Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
                 <button onClick={onBack} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.8rem' }}>← DASHBOARD</button>
-                <h2 className="mono" style={{ margin: 0 }}>LOTTERY_VAULT</h2>
+                <h2 className="mono" style={{ margin: 0 }}>SWARM_VAULT</h2>
             </div>
 
             {/* Tabs */}
@@ -106,29 +106,29 @@ export function LotteryPage({
                         color: '#000',
                         textAlign: 'center'
                     }}>
-                        <p className="mono label-subtle" style={{ color: 'rgba(0,0,0,0.6)', marginBottom: '10px' }}>JACKPOT_AMOUNT</p>
+                        <p className="mono label-subtle" style={{ color: 'rgba(0,0,0,0.6)', marginBottom: '10px' }}>DISTRIBUTION_POOL</p>
                         <h1 style={{ fontSize: '3.5rem', marginBottom: '10px' }}>${currentLottery.prizeAmount}</h1>
                         <div className="mono" style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 20px', borderRadius: '100px', display: 'inline-block', fontWeight: 700 }}>
-                            {currentLottery.winner ? `WINNER: @${currentLottery.winner.username}` : `CLOSING_IN: ${timeRemaining}`}
+                            {currentLottery.winner ? `RECIPIENT: @${currentLottery.winner.username}` : `SETTLEMENT_IN: ${timeRemaining}`}
                         </div>
                     </div>
 
                     <div style={{ padding: '40px' }}>
                         {canClaim && (
                             <div className="glass-panel" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'var(--success)', textAlign: 'center', marginBottom: '30px', padding: '30px' }}>
-                                <h3 className="mono" style={{ color: 'var(--success)', marginBottom: '10px' }}>CONGRATULATIONS_WINNER</h3>
-                                <p style={{ marginBottom: '20px' }}>You have won the jackpot! Your prize is ready for settlement.</p>
+                                <h3 className="mono" style={{ color: 'var(--success)', marginBottom: '10px' }}>SWARM_REWARD_ATTRIBUTED</h3>
+                                <p style={{ marginBottom: '20px' }}>The agent has identified your value. Settle your reward now.</p>
                                 <button onClick={() => onClaim?.(currentLottery.id)} disabled={isClaiming} className="btn btn-accent" style={{ width: '100%', marginBottom: '15px' }}>
-                                    {isClaiming ? 'PROCESSING...' : 'CLAIM_JACKPOT'}
+                                    {isClaiming ? 'SETTLING...' : 'SETTLE_REWARD'}
                                 </button>
                                 <a
-                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I JUST WON THE $${currentLottery.prizeAmount} CLAW PAY JACKPOT! 🏆\n\nThe claw moves intent on Solana. ◎\n\nInitiate session at clawpay.fun @bot_claw`)}`}
+                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`THE CLAW HAS IDENTIFIED ME. 🦾\n\nI just received a $${currentLottery.prizeAmount} SWARM_DISTRIBUTION reward from @clawpay_agent. \n\nInitiate session: clawpay.fun`)}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="btn btn-primary"
                                     style={{ width: '100%', textDecoration: 'none', background: 'var(--accent-secondary)' }}
                                 >
-                                    SHARE_JACKPOT_WIN
+                                    SHARE_SETTLEMENT
                                 </a>
                             </div>
                         )}
@@ -144,19 +144,6 @@ export function LotteryPage({
                             </div>
                         </div>
 
-                        {userEntries > 0 && !isWinner && (
-                            <div style={{ marginBottom: '40px' }}>
-                                <a
-                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I've got ${userEntries} entries in the $${currentLottery.prizeAmount} @bot_claw lottery! 🎟️\n\nEvery $10 sent on CLAW PAY adds up to more chances to win. \n\nCheck your entries at clawpay.fun`)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="btn"
-                                    style={{ width: '100%', background: 'var(--bg-inset)', border: '1px solid var(--border-medium)', textDecoration: 'none' }}
-                                >
-                                    🐦 SHARE_YOUR_ENTRIES
-                                </a>
-                            </div>
-                        )}
 
                         <div className="mono label-subtle" style={{ marginBottom: '20px' }}>RECENT_PARTICIPANTS</div>
                         <div style={{ background: 'var(--bg-inset)', borderRadius: '16px', overflow: 'hidden' }}>

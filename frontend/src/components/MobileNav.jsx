@@ -5,7 +5,7 @@ import '../index.css';
 const baseNavItems = [
     { id: 'home', icon: Home, label: 'HOME' },
     { id: 'leaders', icon: Trophy, label: 'LEADS' },
-    { id: 'lottery', icon: Ticket, label: 'LOTTO' },
+    { id: 'lottery', icon: Ticket, label: 'SWARM' },
     { id: 'profile', icon: User, label: 'PROFILE' },
 ];
 

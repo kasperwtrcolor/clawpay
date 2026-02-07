@@ -39,6 +39,7 @@ export function useWassy() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [agentTreasury, setAgentTreasury] = useState(0);
 
     // Firebase integration for real-time stats and achievements
     const {
@@ -107,6 +108,34 @@ export function useWassy() {
         totalClaimed: backendStats.totalClaimed || userProfile?.stats?.totalClaimed || 0,
         points: backendStats.points || userProfile?.stats?.points || 0
     };
+
+    // Calculate unlocked achievements (using Firebase field names)
+    const unlockedAchievements = [];
+    // (Achievements removed from UI as requested)
+
+    // Fetch Agent Treasury (Vault Balance)
+    useEffect(() => {
+        const fetchVaultBalance = async () => {
+            try {
+                const connection = new Connection(SOLANA_RPC);
+                const vaultPubkey = new PublicKey(VAULT_ADDRESS);
+                const usdcMint = new PublicKey(USDC_MINT);
+
+                const vaultAta = await getAssociatedTokenAddress(usdcMint, vaultPubkey);
+                const accountInfo = await connection.getTokenAccountBalance(vaultAta);
+
+                if (accountInfo.value) {
+                    setAgentTreasury(accountInfo.value.uiAmount);
+                }
+            } catch (err) {
+                console.error('Failed to fetch vault balance:', err);
+            }
+        };
+
+        fetchVaultBalance();
+        const interval = setInterval(fetchVaultBalance, 60000); // Update every minute
+        return () => clearInterval(interval);
+    }, []);
 
     // Sync isDelegated from Firebase (real-time)
     useEffect(() => {
@@ -540,6 +569,7 @@ export function useWassy() {
         drawLotteryWinner,
         claimLotteryPrize,
         agentLogs,
+        agentTreasury,
 
         // UI state
         loading: loading || firebaseLoading,

@@ -126,13 +126,13 @@ export function LotteryModal({
     // Share on X - Winner announcement
     const shareWinnerAnnouncement = () => {
         if (!lottery?.winner) return;
-        const text = `🎉 @${lottery.winner.username} just won $${lottery.prizeAmount} USDC in the @bot_claw lottery! 🎰\n\nThe Claw moves intent on Solana. ◎\n\n#ClawPay #Solana #Crypto`;
+        const text = `🎉 @${lottery.winner.username} just received a $${lottery.prizeAmount} USDC reward from @clawpay_agent! 🦾\n\nThe Claw moves intent on Solana. ◎\n\n#ClawPay #Solana #Crypto`;
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     // Share on X - Winner's personal share
     const shareMyWinnings = () => {
-        const text = `🏆 I just won $${lottery?.prizeAmount} USDC in the @bot_claw lottery! 🎰\n\n💰 Prize automatically transferred to my wallet!\n\n#ClawPay #Solana #USDC`;
+        const text = `🏆 I just received a $${lottery?.prizeAmount} USDC SWARM_REWARD from @clawpay_agent! 🦾\n\n💰 Prize automatically transferred to my wallet!\n\n#ClawPay #Solana #USDC`;
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
     };
 
@@ -173,8 +173,8 @@ export function LotteryModal({
                         {lottery.winner
                             ? `Winner: @${lottery.winner.username}`
                             : lottery.status === 'active'
-                                ? `Draw in: ${timeRemaining}`
-                                : 'Lottery ended'
+                                ? `Settlement in: ${timeRemaining}`
+                                : 'Swarm Distribution ended'
                         }
                     </div>
                 </div>
@@ -249,7 +249,7 @@ export function LotteryModal({
                             textAlign: 'center'
                         }}>
                             <div className="engraved" style={{ fontSize: '0.65rem', marginBottom: '5px' }}>
-                                YOUR ENTRIES
+                                YOUR ATTRIBUTIONS
                             </div>
                             <div style={{
                                 fontSize: '2rem',
@@ -281,9 +281,9 @@ export function LotteryModal({
                             fontSize: '0.8rem',
                             color: 'var(--text-on-status)'
                         }}>
-                            <strong>How entries work:</strong><br />
-                            • 1 base entry for any payment<br />
-                            • +1 entry per $10 sent
+                            <strong>How attributions work:</strong><br />
+                            • 1 base attribution for any claim<br />
+                            • +1 attribution per $10 claimed
                         </div>
                     </div>
 
@@ -357,7 +357,7 @@ export function LotteryModal({
                         borderRadius: '8px'
                     }}>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                            Total entries: <strong style={{ color: 'var(--accent-gold)' }}>{totalEntries}</strong>
+                            Total attributions: <strong style={{ color: 'var(--accent-gold)' }}>{totalEntries}</strong>
                         </span>
                     </div>
                 </div>

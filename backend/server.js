@@ -6,7 +6,7 @@ import { Connection, PublicKey, Keypair, Transaction, ComputeBudgetProgram } fro
 import { getAssociatedTokenAddress, getAccount, createTransferInstruction, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import bs58 from "bs58";
 import admin from "firebase-admin";
-import { SocialPulse } from "./skills/SocialPulse.js";
+import { SocialPulse } from "./skills/social_pulse/SocialPulse.js";
 
 dotenv.config();
 const app = express();
@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const BOT_HANDLE = (process.env.BOT_HANDLE || "bot_claw").toLowerCase();
+const BOT_HANDLE = (process.env.BOT_HANDLE || "clawpay_agent").toLowerCase();
 const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN;
 const SCAN_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 const ADMIN_WALLET = process.env.ADMIN_WALLET || "6SxLVfFovSjR2LAFcJ5wfT6RFjc8GxsscRekGnLq8BMe";

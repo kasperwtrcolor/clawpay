@@ -113,7 +113,7 @@ export function LotteryBanner({
                             padding: '2px 8px',
                             borderRadius: '4px'
                         }}>
-                            LIVE LOTTERY
+                            SWARM DISTRIBUTION
                         </span>
                     </div>
                     <div style={{
@@ -159,7 +159,7 @@ export function LotteryBanner({
                 color: 'white'
             }}>
                 <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>
-                    🧠 Agent Mood: <span style={{ fontWeight: 700 }}>Feeling Orange Today</span> (Tips in $🧡 increase win chance!)
+                    🧠 Agent Intent: <span style={{ fontWeight: 700 }}>Evolving Swarm Intelligence</span>
                 </span>
                 <span style={{
                     fontSize: '0.75rem',

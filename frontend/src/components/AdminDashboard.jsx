@@ -31,9 +31,8 @@ export function AdminDashboard({
     const metrics = {
         totalUsers: users?.length || 0,
         totalVolume: users?.reduce((sum, u) => sum + (u.total_sent || 0) + (u.total_claimed || 0), 0) || 0,
-        totalSent: users?.reduce((sum, u) => sum + (u.total_sent || 0), 0) || 0,
         totalClaimed: users?.reduce((sum, u) => sum + (u.total_claimed || 0), 0) || 0,
-        activeUsers: users?.filter(u => (u.total_sent || 0) > 0 || (u.total_claimed || 0) > 0).length || 0
+        activeUsers: users?.filter(u => (u.total_claimed || 0) > 0).length || 0
     };
 
     // Filter users by search
@@ -93,7 +92,7 @@ export function AdminDashboard({
     const tabs = [
         { id: 'overview', label: '📊 Overview' },
         { id: 'users', label: '👥 Users' },
-        { id: 'lottery', label: '🎰 Lottery' }
+        { id: 'lottery', label: '🎰 Swarm Dist' }
     ];
 
     return (
@@ -145,12 +144,6 @@ export function AdminDashboard({
                             </div>
                         </div>
                         <div className="inset-panel" style={{ padding: '15px', textAlign: 'center' }}>
-                            <div className="engraved" style={{ fontSize: '0.65rem', marginBottom: '5px' }}>TOTAL SENT</div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--danger)' }}>
-                                ${metrics.totalSent.toFixed(0)}
-                            </div>
-                        </div>
-                        <div className="inset-panel" style={{ padding: '15px', textAlign: 'center' }}>
                             <div className="engraved" style={{ fontSize: '0.65rem', marginBottom: '5px' }}>TOTAL CLAIMED</div>
                             <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--success)' }}>
                                 ${metrics.totalClaimed.toFixed(0)}
@@ -191,7 +184,6 @@ export function AdminDashboard({
                                 <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                     <th style={{ padding: '12px', textAlign: 'left', color: 'var(--text-muted)' }}>USERNAME</th>
                                     <th style={{ padding: '12px', textAlign: 'left', color: 'var(--text-muted)' }}>WALLET</th>
-                                    <th style={{ padding: '12px', textAlign: 'right', color: 'var(--text-muted)' }}>SENT</th>
                                     <th style={{ padding: '12px', textAlign: 'right', color: 'var(--text-muted)' }}>CLAIMED</th>
                                     <th style={{ padding: '12px', textAlign: 'right', color: 'var(--accent-gold)' }}>POINTS</th>
                                 </tr>
@@ -203,7 +195,6 @@ export function AdminDashboard({
                                         <td className="mono" style={{ padding: '12px', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                                             {(u.wallet_address || u.walletAddress || '').slice(0, 6)}...{(u.wallet_address || u.walletAddress || '').slice(-4)}
                                         </td>
-                                        <td style={{ padding: '12px', textAlign: 'right', color: 'var(--danger)' }}>${(u.total_sent || 0).toFixed(2)}</td>
                                         <td style={{ padding: '12px', textAlign: 'right', color: 'var(--success)' }}>${(u.total_claimed || 0).toFixed(2)}</td>
                                         <td style={{ padding: '12px', textAlign: 'right', fontWeight: '700', color: 'var(--accent-gold)' }}>
                                             {((u.total_deposited || 0) + (u.total_sent || 0) + (u.total_claimed || 0)).toFixed(0)}
@@ -224,7 +215,7 @@ export function AdminDashboard({
             {/* Enhanced Lottery Tab */}
             {activeTab === 'lottery' && (
                 <div className="glass-panel" style={{ padding: '25px', marginBottom: '20px' }}>
-                    <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// LOTTERY_MANAGEMENT</div>
+                    <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// SWARM_DISTRIBUTION_MANAGEMENT</div>
 
                     {/* Current Lottery Status */}
                     {currentLottery && (
@@ -272,7 +263,7 @@ export function AdminDashboard({
                                     className="btn btn-success"
                                     style={{ marginTop: '15px', width: '100%' }}
                                 >
-                                    🚀 ACTIVATE LOTTERY
+                                    🚀 ACTIVATE SWARM DISTRIBUTION
                                 </button>
                             )}
 
@@ -293,7 +284,7 @@ export function AdminDashboard({
                     {(!currentLottery || isLotteryCompleted) && (
                         <div className="inset-panel" style={{ padding: '20px', marginBottom: '20px' }}>
                             <div className="engraved" style={{ fontSize: '0.7rem', marginBottom: '15px' }}>
-                                CREATE NEW LOTTERY
+                                CREATE NEW SWARM DISTRIBUTION
                             </div>
 
                             <div style={{ display: 'grid', gap: '15px' }}>

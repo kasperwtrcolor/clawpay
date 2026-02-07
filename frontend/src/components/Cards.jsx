@@ -87,10 +87,6 @@ export function StatsCard({ userStats }) {
         <div className="glass-panel" style={{ marginBottom: '30px' }}>
             <div className="label-subtle">// USER_STATS_SNAPSHOT</div>
             <div className="stats-grid" style={{ marginTop: '20px' }}>
-                <div className="stat-item">
-                    <div className="label-subtle">SENT</div>
-                    <div className="mono" style={{ fontSize: '1.5rem', fontWeight: 900 }}>${(userStats?.totalSent || 0).toFixed(2)}</div>
-                </div>
                 <div className="stat-item" style={{ boxShadow: '4px 4px 0px var(--accent)' }}>
                     <div className="label-subtle">CLAIMED</div>
                     <div className="mono" style={{ fontSize: '1.5rem', fontWeight: 900 }}>${(userStats?.totalClaimed || 0).toFixed(2)}</div>
@@ -110,7 +106,7 @@ export function HowToPayCard() {
             <div className="label-subtle">// COMMAND_GUIDE</div>
             <div className="inset-panel" style={{ marginTop: '20px', background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>
                 <code className="mono" style={{ fontSize: '1rem' }}>
-                    <span style={{ color: 'var(--accent-secondary)' }}>@bot_claw</span> send <span style={{ color: 'var(--accent)' }}>@username</span> $10
+                    <span style={{ color: 'var(--accent-secondary)' }}>@clawpay_agent</span> send <span style={{ color: 'var(--accent)' }}>@username</span> $10
                 </code>
             </div>
             <p className="mono" style={{ fontSize: '0.75rem', marginTop: '15px', opacity: 0.7 }}>
@@ -128,7 +124,7 @@ export function Footer({ onShowTerms }) {
                     CLAW_PAY v2.0 // SOLANA_MAINNET // © 2026
                 </div>
                 <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '30px' }}>
-                    <a href="https://x.com/bot_claw" className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-primary)' }}>@BOT_CLAW</a>
+                    <a href="https://x.com/clawpay_agent" className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-primary)' }}>@CLAWPAY_AGENT</a>
                     <button onClick={onShowTerms} className="mono" style={{ background: 'none', border: 'none', fontSize: '0.7rem', cursor: 'pointer', textDecoration: 'underline' }}>TERMS_OF_SERVICE</button>
                 </div>
             </div>
