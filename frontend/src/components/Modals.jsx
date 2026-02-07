@@ -372,7 +372,7 @@ export function ShareSuccessModal({ show, onClose, payment, xUsername, theme }) 
     if (!show || !payment) return null;
 
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        `Just claimed $${payment.amount} USDC on X via @bot_wassy! 💸\n\nSocial payments are finally here on Solana. ◎\n\nClaim yours at wassypay.fun`
+        `Just claimed $${payment.amount} USDC on X via @bot_claw! 💸\n\nSocial economic settlement is here. ◎\n\nInitiate session at clawpay.fun`
     )}`;
 
     const generateReceipt = () => {
@@ -416,7 +416,7 @@ export function ShareSuccessModal({ show, onClose, payment, xUsername, theme }) 
         // Header
         ctx.fillStyle = isLight ? '#000000' : '#ffffff';
         ctx.font = 'bold 32px Space Grotesk';
-        ctx.fillText('WASSY PAY // RECEIPT', 60, 80);
+        ctx.fillText('CLAW PAY // SETTLEMENT_RECEIPT', 60, 80);
 
         // Date
         ctx.font = '16px JetBrains Mono';
@@ -462,11 +462,11 @@ export function ShareSuccessModal({ show, onClose, payment, xUsername, theme }) 
         ctx.textAlign = 'center';
         ctx.font = '14px Space Grotesk';
         ctx.fillStyle = isLight ? '#999999' : '#444444';
-        ctx.fillText('BUILT ON SOLANA // WASSYPAY.FUN', width / 2, height - 45);
+        ctx.fillText('BUILT ON SOLANA // CLAWPAY.FUN', width / 2, height - 45);
 
         // Download
         const link = document.createElement('a');
-        link.download = `wassypay-receipt-${payment.id || Date.now()}.png`;
+        link.download = `clawpay-receipt-${payment.id || Date.now()}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     };
@@ -491,7 +491,7 @@ export function ShareSuccessModal({ show, onClose, payment, xUsername, theme }) 
                     color: 'var(--text-primary)',
                     marginBottom: '20px'
                 }}>
-                    Wassy Pay
+                    CLAW PAY
                 </div>
 
                 <h2 style={{
@@ -551,7 +551,7 @@ export function LotteryWinModal({ show, onClose, prizeAmount, theme }) {
     if (!show) return null;
 
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        `HOLY SHIT! I just won a $${prizeAmount} USDC jackpot on Wassy Pay! 🏆💸\n\nSocial payments on Solana are the future. ◎\n\nCheck if you won at wassypay.fun @bot_wassy`
+        `HOLY SHIT! I just won a $${prizeAmount} USDC jackpot on CLAW PAY! 🏆💸\n\nThe Claw moves intent on Solana. ◎\n\nVerify entries at clawpay.fun @bot_claw`
     )}`;
 
     return (

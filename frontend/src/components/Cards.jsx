@@ -1,11 +1,10 @@
 import '../index.css';
 import { useState, useEffect } from 'react';
 
-// Scrolling Payment Ticker - shows recent payment usernames
+// Scrolling Payment Ticker
 export function PaymentTicker({ payments }) {
     if (!payments || payments.length === 0) return null;
 
-    // Get unique recent senders/recipients for the ticker
     const recentUsers = [...new Set(
         payments.slice(0, 20).flatMap(p => [
             p.sender_username ? `@${p.sender_username}` : null,
@@ -14,38 +13,35 @@ export function PaymentTicker({ payments }) {
     )].slice(0, 15);
 
     if (recentUsers.length === 0) return null;
-
-    // Double the items for seamless loop
     const tickerItems = [...recentUsers, ...recentUsers];
 
     return (
         <div className="ticker-container" style={{
             overflow: 'hidden',
-            background: 'var(--bg-inset)',
-            borderBottom: '1px solid var(--border-subtle)',
-            padding: '8px 0',
-            marginBottom: '20px'
+            background: 'var(--text-primary)',
+            borderBottom: 'var(--border)',
+            padding: '10px 0',
+            marginBottom: '30px'
         }}>
             <div className="ticker-content" style={{
                 display: 'flex',
-                animation: 'scroll 30s linear infinite',
+                animation: 'tickerScroll 40s linear infinite',
                 whiteSpace: 'nowrap'
             }}>
                 {tickerItems.map((user, i) => (
-                    <span key={i} style={{
+                    <span key={i} className="mono" style={{
                         display: 'inline-block',
-                        padding: '0 30px',
-                        color: i % 2 === 0 ? 'var(--glow)' : 'var(--accent-gold)',
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: '0.8rem',
-                        fontWeight: '600'
+                        padding: '0 40px',
+                        color: 'var(--bg-primary)',
+                        fontSize: '0.75rem',
+                        fontWeight: '800'
                     }}>
-                        {user} ⚡
+                        {user.toUpperCase()} ⚡
                     </span>
                 ))}
             </div>
             <style>{`
-                @keyframes scroll {
+                @keyframes tickerScroll {
                     0% { transform: translateX(0); }
                     100% { transform: translateX(-50%); }
                 }
@@ -62,87 +58,52 @@ export function ScanCountdown() {
             const now = new Date();
             const minutes = now.getMinutes();
             const seconds = now.getSeconds();
-
-            // Bot scans at :20 and :50 each hour (20 and 50 min marks)
-            // Find the next scan time
-            let nextScanMinute;
-            if (minutes < 20) {
-                nextScanMinute = 20;
-            } else if (minutes < 50) {
-                nextScanMinute = 50;
-            } else {
-                nextScanMinute = 80; // Next hour's :20
-            }
-
+            let nextScanMinute = minutes < 20 ? 20 : (minutes < 50 ? 50 : 80);
             const minutesLeft = nextScanMinute - minutes - 1;
             const secondsLeft = 60 - seconds;
-
-            if (minutesLeft < 0) {
-                setTimeLeft('0:00');
-            } else {
-                setTimeLeft(`${minutesLeft}:${secondsLeft.toString().padStart(2, '0')}`);
-            }
+            setTimeLeft(minutesLeft < 0 ? '0:00' : `${minutesLeft}:${secondsLeft.toString().padStart(2, '0')}`);
         };
-
         updateCountdown();
         const interval = setInterval(updateCountdown, 1000);
         return () => clearInterval(interval);
     }, []);
 
     return (
-        <div className="glass-panel scan-countdown" style={{
-            padding: '20px',
-            marginBottom: '20px',
+        <div className="glass-panel" style={{
+            marginBottom: '30px',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            background: 'var(--accent)',
+            boxShadow: '4px 4px 0px var(--text-primary)'
         }}>
-            <div>
-                <div className="mono label-subtle" style={{ fontSize: '0.6rem', marginBottom: '4px' }}>
-                    // NEXT_PAYMENT_SCAN
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Scanned every 30 minutes
-                </div>
+            <div className="mono">
+                <div className="label-subtle" style={{ background: '#000', color: '#fff' }}>// NEXT_SCAN</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#000' }}>AGENT_SCANNING_X_INTERVAL</div>
             </div>
-            <div className="mono" style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                color: 'var(--accent)',
-            }}>
-                ⏱️ {timeLeft}
+            <div className="mono" style={{ fontSize: '1.8rem', fontWeight: '900', color: '#000' }}>
+                {timeLeft}
             </div>
         </div>
     );
 }
 
 export function StatsCard({ userStats }) {
-    // Safe defaults for Firebase stats
-    const sent = userStats?.totalSent || 0;
-    const claimed = userStats?.totalClaimed || 0;
-    const points = userStats?.points || 0;
-
     return (
-        <div className="glass-panel" style={{ padding: '30px', marginBottom: '20px' }}>
-            <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// YOUR_STATS</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-                <div className="inset-panel" style={{ textAlign: 'center', padding: '20px' }}>
-                    <div className="mono label-subtle" style={{ fontSize: '0.55rem', marginBottom: '8px' }}>SENT</div>
-                    <div className="mono" style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--error)' }}>
-                        ${sent.toFixed(2)}
-                    </div>
+        <div className="glass-panel" style={{ marginBottom: '30px' }}>
+            <div className="label-subtle">// USER_STATS_SNAPSHOT</div>
+            <div className="stats-grid" style={{ marginTop: '20px' }}>
+                <div className="stat-item">
+                    <div className="label-subtle">SENT</div>
+                    <div className="mono" style={{ fontSize: '1.5rem', fontWeight: 900 }}>${(userStats?.totalSent || 0).toFixed(2)}</div>
                 </div>
-                <div className="inset-panel" style={{ textAlign: 'center', padding: '20px' }}>
-                    <div className="mono label-subtle" style={{ fontSize: '0.55rem', marginBottom: '8px' }}>CLAIMED</div>
-                    <div className="mono" style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--success)' }}>
-                        ${claimed.toFixed(2)}
-                    </div>
+                <div className="stat-item" style={{ boxShadow: '4px 4px 0px var(--accent)' }}>
+                    <div className="label-subtle">CLAIMED</div>
+                    <div className="mono" style={{ fontSize: '1.5rem', fontWeight: 900 }}>${(userStats?.totalClaimed || 0).toFixed(2)}</div>
                 </div>
-                <div className="inset-panel" style={{ textAlign: 'center', padding: '20px' }}>
-                    <div className="mono label-subtle" style={{ fontSize: '0.55rem', marginBottom: '8px' }}>POINTS</div>
-                    <div className="mono" style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--accent)' }}>
-                        {points.toFixed(0)}
-                    </div>
+                <div className="stat-item" style={{ boxShadow: '4px 4px 0px var(--accent-secondary)' }}>
+                    <div className="label-subtle">POINTS</div>
+                    <div className="mono" style={{ fontSize: '1.5rem', fontWeight: 900 }}>{(userStats?.points || 0).toFixed(0)}</div>
                 </div>
             </div>
         </div>
@@ -151,18 +112,15 @@ export function StatsCard({ userStats }) {
 
 export function HowToPayCard() {
     return (
-        <div className="glass-panel howto-card" style={{ padding: '30px', marginBottom: '20px' }}>
-            <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// HOW_TO_PAY</div>
-            <div className="inset-panel" style={{ textAlign: 'center', padding: '20px', marginBottom: '15px' }}>
-                <span className="mono" style={{ fontSize: '1rem' }}>
-                    <span style={{ color: 'var(--accent-secondary)' }}>@bot_claw</span>
-                    <span style={{ color: 'var(--text-muted)' }}> send </span>
-                    <span style={{ color: 'var(--accent)' }}>@friend</span>
-                    <span style={{ color: 'var(--success)' }}> $5</span>
-                </span>
+        <div className="glass-panel" style={{ marginBottom: '30px' }}>
+            <div className="label-subtle">// COMMAND_GUIDE</div>
+            <div className="inset-panel" style={{ marginTop: '20px', background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>
+                <code className="mono" style={{ fontSize: '1rem' }}>
+                    <span style={{ color: 'var(--accent-secondary)' }}>@bot_claw</span> send <span style={{ color: 'var(--accent)' }}>@username</span> $10
+                </code>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.6 }}>
-                Post on X with the format above to send USDC.
+            <p className="mono" style={{ fontSize: '0.75rem', marginTop: '15px', opacity: 0.7 }}>
+                POST THIS COMMAND ON X TO TRIGGER THE SETTLEMENT ENGINE.
             </p>
         </div>
     );
@@ -170,73 +128,38 @@ export function HowToPayCard() {
 
 export function Footer({ onShowTerms }) {
     return (
-        <div style={{ textAlign: 'center', padding: '30px', color: '#444' }}>
-            <div className="mono" style={{ fontSize: '0.65rem', marginBottom: '15px' }}>
-                © 2026 Claw Pay • BUILT ON SOLANA
+        <footer style={{ padding: '60px 0', borderTop: 'var(--border)', textAlign: 'center', marginTop: '40px' }}>
+            <div className="container">
+                <div className="mono" style={{ fontSize: '0.7rem', fontWeight: 800 }}>
+                    CLAW_PAY v2.0 // SOLANA_MAINNET // © 2026
+                </div>
+                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '30px' }}>
+                    <a href="https://x.com/bot_claw" className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-primary)' }}>@BOT_CLAW</a>
+                    <button onClick={onShowTerms} className="mono" style={{ background: 'none', border: 'none', fontSize: '0.7rem', cursor: 'pointer', textDecoration: 'underline' }}>TERMS_OF_SERVICE</button>
+                </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-                @bot_claw
-                <span style={{ color: 'var(--text-primary)' }}>•</span>
-                <button
-                    onClick={onShowTerms}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.7rem',
-                        cursor: 'pointer',
-                        fontFamily: "'JetBrains Mono', monospace"
-                    }}
-                >
-                    Terms & Conditions
-                </button>
-            </div>
-        </div>
+        </footer>
     );
 }
 
-// Terms and Conditions Modal
 export function TermsModal({ show, onClose }) {
     if (!show) return null;
-
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-plate" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-                <div className="engraved" style={{ marginBottom: '20px' }}>// TERMS_AND_CONDITIONS</div>
-
-                <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.8, fontFamily: "'JetBrains Mono', monospace" }}>
-                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--glow)', marginBottom: '10px', fontWeight: 600 }}>1. Service Description</h3>
-                        <p>Claw Pay is a non-custodial social payment service built on Solana. Users maintain full control of their wallets and funds at all times.</p>
-
-                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--glow)', marginTop: '20px', marginBottom: '10px', fontWeight: 600 }}>2. No Financial Advice</h3>
-                        <p>This service does not provide financial, investment, or legal advice. Users are responsible for their own financial decisions.</p>
-
-                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--glow)', marginTop: '20px', marginBottom: '10px', fontWeight: 600 }}>3. Risk Acknowledgment</h3>
-                        <p>Cryptocurrency transactions are irreversible. Users acknowledge the risks associated with blockchain transactions including but not limited to: network fees, transaction failures, and price volatility.</p>
-
-                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--glow)', marginTop: '20px', marginBottom: '10px', fontWeight: 600 }}>4. User Responsibility</h3>
-                        <p>Users are responsible for:</p>
-                        <ul style={{ marginLeft: '20px', marginTop: '5px' }}>
-                            <li>Securing their wallet credentials</li>
-                            <li>Ensuring sufficient funds for transactions</li>
-                            <li>Verifying recipient addresses before sending</li>
-                        </ul>
-
-                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--glow)', marginTop: '20px', marginBottom: '10px', fontWeight: 600 }}>5. Service Availability</h3>
-                        <p>We strive for 99.9% uptime but do not guarantee uninterrupted service. Payment scanning occurs every 30 minutes.</p>
-
-                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--glow)', marginTop: '20px', marginBottom: '10px', fontWeight: 600 }}>6. Privacy</h3>
-                        <p>We only store X usernames and wallet addresses necessary for service operation. Blockchain transactions are public by nature.</p>
-
-                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", color: 'var(--glow)', marginTop: '20px', marginBottom: '10px', fontWeight: 600 }}>7. Modifications</h3>
-                        <p>We reserve the right to modify these terms at any time. Continued use constitutes acceptance of modified terms.</p>
-                    </div>
+        <div className="modal-overlay" style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+            <div className="glass-panel" style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflowY: 'auto' }}>
+                <div className="label-subtle">// LEGAL_DIRECTIVES</div>
+                <div className="mono" style={{ fontSize: '0.8rem', marginTop: '20px', lineHeight: 1.6 }}>
+                    <h3 style={{ fontSize: '1rem', color: 'var(--accent)' }}>01. NON-CUSTODIAL</h3>
+                    <p style={{ marginBottom: '20px' }}>Claw Pay does not hold your funds. You remain in control of your keys at all times.</p>
+                    <h3 style={{ fontSize: '1rem', color: 'var(--accent)' }}>02. RISK_VECTORS</h3>
+                    <p style={{ marginBottom: '20px' }}>Blockchain transactions are final. Verify recipient handles carefully.</p>
+                    <h3 style={{ fontSize: '1rem', color: 'var(--accent)' }}>03. SETTLEMENT</h3>
+                    <p style={{ marginBottom: '20px' }}>Payments are processed every 30 minutes on Solana Mainnet.</p>
                 </div>
-
-                <button onClick={onClose} className="btn btn-primary" style={{ marginTop: '20px', width: '100%' }}>
-                    I UNDERSTAND
-                </button>
+                <button onClick={onClose} className="btn btn-primary" style={{ width: '100%', marginTop: '30px' }}>ACKNOWLEDGEMENT_SECURED</button>
             </div>
         </div>
     );

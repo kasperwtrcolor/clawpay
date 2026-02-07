@@ -93,7 +93,7 @@ export function LotteryPage({
                 <div className="mono label-subtle" style={{ marginBottom: '10px', color: 'var(--accent)' }}>// HOW_IT_WORKS</div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                     Every user earns <strong style={{ color: 'var(--text-primary)' }}>1 base entry</strong> for participating.
-                    Earn <strong style={{ color: 'var(--accent)' }}>1 additional entry</strong> for every $10 sent through Wassy Pay.
+                    Earn <strong style={{ color: 'var(--accent)' }}>1 additional entry</strong> for every $10 sent through CLAW PAY.
                     The more payments you send, the higher your odds of winning the jackpot!
                 </p>
             </div>
@@ -122,7 +122,7 @@ export function LotteryPage({
                                     {isClaiming ? 'PROCESSING...' : 'CLAIM_JACKPOT'}
                                 </button>
                                 <a
-                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I JUST WON THE $${currentLottery.prizeAmount} WASSY PAY JACKPOT! 🏆\n\nSocial payments on Solana are real. ◎\n\nClaim your payments at wassypay.fun @bot_wassy`)}`}
+                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I JUST WON THE $${currentLottery.prizeAmount} CLAW PAY JACKPOT! 🏆\n\nThe claw moves intent on Solana. ◎\n\nInitiate session at clawpay.fun @bot_claw`)}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="btn btn-primary"
@@ -147,7 +147,7 @@ export function LotteryPage({
                         {userEntries > 0 && !isWinner && (
                             <div style={{ marginBottom: '40px' }}>
                                 <a
-                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I've got ${userEntries} entries in the $${currentLottery.prizeAmount} @bot_wassy lottery! 🎟️\n\nEvery $10 sent on Wassy Pay adds up to more chances to win. \n\nCheck your entries at wassypay.fun`)}`}
+                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I've got ${userEntries} entries in the $${currentLottery.prizeAmount} @bot_claw lottery! 🎟️\n\nEvery $10 sent on CLAW PAY adds up to more chances to win. \n\nCheck your entries at clawpay.fun`)}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="btn"

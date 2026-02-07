@@ -126,13 +126,13 @@ export function LotteryModal({
     // Share on X - Winner announcement
     const shareWinnerAnnouncement = () => {
         if (!lottery?.winner) return;
-        const text = `🎉 @${lottery.winner.username} just won $${lottery.prizeAmount} USDC in the @bot_wassy lottery! 🎰\n\nSend payments to earn entries for the next draw!\n\n#WassyBot #Solana #Crypto`;
+        const text = `🎉 @${lottery.winner.username} just won $${lottery.prizeAmount} USDC in the @bot_claw lottery! 🎰\n\nThe Claw moves intent on Solana. ◎\n\n#ClawPay #Solana #Crypto`;
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     // Share on X - Winner's personal share
     const shareMyWinnings = () => {
-        const text = `🏆 I just won $${lottery?.prizeAmount} USDC in the @bot_wassy lottery! 🎰\n\n💰 Prize automatically transferred to my wallet!\n\nSend payments to earn entries for the next draw 👇\n\n#WassyBot #Solana #USDC`;
+        const text = `🏆 I just won $${lottery?.prizeAmount} USDC in the @bot_claw lottery! 🎰\n\n💰 Prize automatically transferred to my wallet!\n\n#ClawPay #Solana #USDC`;
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
     };
 

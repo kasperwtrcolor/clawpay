@@ -20,7 +20,7 @@ export function LotteryWinnerCard({
     // Share on X
     const handleShareOnX = () => {
         setIsSharing(true);
-        const text = `🎉 I just won $${lottery.prizeAmount} USDC in the @bot_wassy lottery! 🎰\n\n💰 Prize claimed and transferred automatically!\n\n#WassyBot #Solana #USDC #CryptoWin`;
+        const text = `I JUST WON THE $${lottery.prizeAmount} CLAW PAY JACKPOT! 🏆\n\nThe Claw moves intent on Solana. ◎\n\nInitiate session at clawpay.fun @bot_claw`;
         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank', 'width=550,height=420');
         setIsSharing(false);
@@ -32,7 +32,7 @@ export function LotteryWinnerCard({
             try {
                 const canvas = await window.html2canvas(cardRef.current);
                 const link = document.createElement('a');
-                link.download = `wassy-win-${lottery.prizeAmount}usdc.png`;
+                link.download = `claw-win-${lottery.prizeAmount}usdc.png`;
                 link.href = canvas.toDataURL();
                 link.click();
             } catch (e) {
@@ -74,7 +74,7 @@ export function LotteryWinnerCard({
                         marginBottom: '15px',
                         letterSpacing: '0.15em'
                     }}>
-                        WASSY PAY
+                        CLAW PAY
                     </div>
 
                     {/* Trophy */}

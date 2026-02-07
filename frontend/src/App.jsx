@@ -195,258 +195,88 @@ function WassyPayApp() {
 
   // Main dashboard
   return (
-    <div className="immersive-dashboard" style={{
+    <div className="dashboard-v2" style={{
       minHeight: '100vh',
       background: 'var(--bg-primary)',
-      padding: '20px',
-      fontFamily: "'Space Grotesk', sans-serif",
-      color: 'var(--text-primary)'
+      color: 'var(--text-primary)',
+      transition: 'background-color 0.3s ease'
     }}>
-      {/* Background Slices - Global */}
-      <div className="strata-bg">
-        <div className="aerogel-slice" style={{ width: '40vw', height: '40vw', top: '-10%', left: '-5%', background: 'var(--accent)' }}></div>
-        <div className="aerogel-slice" style={{ width: '30vw', height: '30vw', bottom: '5%', right: '-10%', background: 'var(--accent-secondary)' }}></div>
-      </div>
-      {/* Tutorial Overlay */}
-      {showTutorial && currentPage === 'home' && <TutorialOverlay onComplete={completeTutorial} />}
-
-      {/* Confetti Animation */}
-      {renderConfetti()}
-
-      {/* Transaction Overlay - global for all transactions */}
+      {/* Transaction Overlay */}
       {(loading || isAuthorizing || isClaiming || isClaimingPrize) && (
-        <div className="claiming-overlay" style={{ zIndex: 10000 }}>
-          <div className="claiming-spinner"></div>
-          <div style={{
-            color: '#fff',
-            fontSize: '1.5rem',
-            fontFamily: "'Fredoka', sans-serif",
-            fontWeight: 700,
-            letterSpacing: '0.05em'
-          }}>
-            PROCESSING_TRANSACTION
-          </div>
-          <div style={{
-            color: 'var(--accent)',
-            fontSize: '0.8rem',
-            marginTop: '15px',
-            letterSpacing: '0.2em'
-          }} className="mono">
-            VERIFYING_SECURE_VAULT_LAYER...
-          </div>
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+          zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column'
+        }}>
+          <div className="tx-spinner" style={{ width: '60px', height: '60px', border: '5px solid #fff', borderRightColor: 'transparent', marginBottom: '30px' }}></div>
+          <div className="mono" style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>EXECUTING_SETTLEMENT...</div>
         </div>
       )}
 
-      {/* Mobile Top Header */}
-      <div className="mobile-only" style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        padding: '15px 20px',
-        background: 'rgba(var(--bg-primary-rgb), 0.8)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid var(--border-subtle)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 500
+      {/* Header */}
+      <nav style={{
+        position: 'sticky', top: 0, background: 'var(--bg-primary)',
+        borderBottom: 'var(--border)', padding: '20px 40px', zIndex: 100,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
       }}>
-        <div style={{
-          fontFamily: "'Fredoka', sans-serif",
-          fontWeight: 700,
-          fontSize: '1.1rem',
-          color: 'var(--text-primary)'
-        }}>
-          CLAW PAY
+        <div className="mono" style={{ fontWeight: 900, fontSize: '1.4rem' }}>CLAW_DASHBOARD</div>
+
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <div className="desktop-only" style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setCurrentPage('home')} className={`btn ${currentPage === 'home' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>HOME</button>
+            <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>PROFILE</button>
+            <button onClick={() => setCurrentPage('lottery')} className={`btn ${currentPage === 'lottery' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>LOTTERY</button>
+          </div>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <button onClick={logout} className="btn btn-accent" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>LOGOUT</button>
         </div>
-        <button
-          onClick={logout}
-          className="btn btn-primary"
-          style={{ padding: '6px 15px', fontSize: '0.65rem' }}
-        >
-          LOGOUT
-        </button>
-      </div>
+      </nav>
 
-      {/* Bottom spacer for mobile header */}
-      <div className="mobile-only" style={{ height: '60px' }}></div>
+      {/* Top Banner / Ticker */}
+      {currentPage === 'home' && <PaymentTicker payments={payments} />}
 
-      {/* Theme Toggle */}
-      <div style={{ position: 'relative', zIndex: 2000 }}>
-        <ThemeToggle theme={theme} onToggle={toggleTheme} />
-      </div>
-
-      {/* Global Toast Notifications - visible on all pages */}
-      {
-        (error || success) && (
-          <div className="toast-container" style={{
-            position: 'fixed',
-            top: '40px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 9999
-          }}>
-            {error && (
-              <div className="toast-notification" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'var(--error)' }}>
-                <div className="mono label-subtle" style={{ color: 'var(--error)', marginBottom: '4px' }}>⚠ ERROR_REPORTED</div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{error}</div>
-              </div>
-            )}
-            {success && (
-              <div className="toast-notification" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'var(--success)' }}>
-                <div className="mono label-subtle" style={{ color: 'var(--success)', marginBottom: '4px' }}>✓ PROCESS_COMPLETE</div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{success}</div>
-              </div>
-            )}
-          </div>
-        )
-      }
-
-      {/* Main Container */}
-      <div className="dashboard-container" style={{ maxWidth: '900px', margin: '0 auto', padding: '0 15px' }}>
-
-        {/* Header - Simplified Glass Nav */}
-        <div className="glass-panel animate-fade-in dashboard-header desktop-only" style={{
-          padding: '20px 30px',
-          marginBottom: '30px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'sticky',
-          top: '20px',
-          zIndex: 50
-        }}>
-          <div className="desktop-only" style={{
-            fontFamily: "'Fredoka', sans-serif",
-            fontWeight: 700,
-            fontSize: '1.4rem',
-            letterSpacing: '-0.02em',
-            color: 'var(--text-primary)'
-          }}>
-            Claw Pay
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="desktop-nav" style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={() => setCurrentPage('home')}
-              className="btn"
-              style={{ padding: '10px 16px', fontSize: '0.75rem', background: currentPage === 'home' ? 'var(--text-primary)' : 'transparent', color: currentPage === 'home' ? 'var(--bg-primary)' : 'var(--text-primary)' }}
-            >
-              HOME
-            </button>
-            <button
-              onClick={() => setCurrentPage('profile')}
-              className="btn"
-              style={{ padding: '10px 16px', fontSize: '0.75rem', background: currentPage === 'profile' ? 'var(--text-primary)' : 'transparent', color: currentPage === 'profile' ? 'var(--bg-primary)' : 'var(--text-primary)' }}
-            >
-              PROFILE
-            </button>
-            <button
-              onClick={() => setCurrentPage('lottery')}
-              className="btn"
-              style={{ padding: '10px 16px', fontSize: '0.75rem', background: currentPage === 'lottery' ? 'var(--text-primary)' : 'transparent', color: currentPage === 'lottery' ? 'var(--bg-primary)' : 'var(--text-primary)' }}
-            >
-              LOTTERY
-            </button>
-            {isAdmin && (
-              <button
-                onClick={() => setCurrentPage('admin')}
-                className="btn"
-                style={{ padding: '10px 16px', fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700 }}
-              >
-                ADMIN
-              </button>
-            )}
-          </div>
-
-          <button
-            onClick={logout}
-            className="btn btn-primary"
-            style={{ padding: '10px 20px', fontSize: '0.75rem' }}
-          >
-            LOGOUT
-          </button>
-        </div>
-
-        {/* Page Content */}
+      <main className="container" style={{ padding: '40px 20px' }}>
         {currentPage === 'home' ? (
-          <>
-            {/* Payment Ticker - scrolling recent users */}
-            <PaymentTicker payments={payments} />
+          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+            <div className="grid-2">
+              <div>
+                <ScanCountdown />
+                <WalletCard
+                  solanaWallet={solanaWallet}
+                  walletBalance={walletBalance}
+                  solBalance={solBalance}
+                  isDelegated={isDelegated}
+                  delegationAmount={delegationAmount}
+                  setDelegationAmount={setDelegationAmount}
+                  isAuthorizing={isAuthorizing}
+                  onAuthorize={handleAuthorize}
+                  onFundWallet={handleFundWallet}
+                  onExportWallet={solanaWallet ? handleExportWallet : null}
+                />
+                <HowToPayCard />
+              </div>
 
-            {/* Countdown to next scan */}
-            <div className="scan-countdown">
-              <ScanCountdown />
-            </div>
+              <div>
+                <StatsCard userStats={userStats} />
 
-            {/* Lottery Banner (shows when active/completed) */}
-            <LotteryBanner
-              lottery={currentLottery}
-              userWallet={solanaWallet?.address}
-              xUsername={xUsername}
-              onOpenDetails={() => setCurrentPage('lottery')}
-            />
-
-            {/* Wallet Card */}
-            <WalletCard
-              solanaWallet={solanaWallet}
-              walletBalance={walletBalance}
-              solBalance={solBalance}
-              isDelegated={isDelegated}
-              delegationAmount={delegationAmount}
-              setDelegationAmount={setDelegationAmount}
-              isAuthorizing={isAuthorizing}
-              onAuthorize={handleAuthorize}
-              onFundWallet={handleFundWallet}
-              onExportWallet={solanaWallet ? handleExportWallet : null}
-              error={error}
-              success={success}
-            />
-
-            {/* Pending Outgoing Payments (for senders) */}
-            <PendingOutgoing
-              payments={pendingOutgoing}
-              isDelegated={isDelegated}
-              walletBalance={walletBalance}
-            />
-
-            {/* Agent Command Center (Activity A & B) */}
-            <div className="glass-panel" style={{ padding: '30px', marginBottom: '20px' }}>
-              <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// AGENT_COMMAND_CENTER</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                <div className="inset-panel">
-                  <div className="mono label-subtle" style={{ fontSize: '0.6rem', marginBottom: '8px' }}>CLAW_SCOUT_BUDGET</div>
-                  <div className="mono" style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--accent)' }}>$50.00 USDC</div>
-                  <button className="btn btn-primary" style={{ marginTop: '15px', width: '100%', fontSize: '0.65rem' }}>UPDATE_BUDGET</button>
-                </div>
-                <div className="inset-panel">
-                  <div className="mono label-subtle" style={{ fontSize: '0.6rem', marginBottom: '8px' }}>SWARM_ACTIVITY</div>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Current Swarm: <span className="mono" style={{ color: 'var(--accent-secondary)' }}>8/10 CLAWZ</span>
+                {/* Agent Agentic Logs Inline */}
+                <div className="glass-panel" style={{ marginBottom: '30px', background: 'var(--bg-secondary)' }}>
+                  <div className="label-subtle" style={{ background: 'var(--accent-secondary)', color: '#000' }}>// AGENT_LIVE_SCAN</div>
+                  <div className="inset-panel" style={{ marginTop: '20px', borderStyle: 'dashed' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <div className="tx-spinner" style={{ width: '15px', height: '15px' }}></div>
+                      <span className="mono" style={{ fontSize: '0.75rem' }}>SCANNING_X_FOR_INTENT...</span>
+                    </div>
+                    <p className="mono" style={{ fontSize: '0.7rem', marginTop: '10px', opacity: 0.7 }}>
+                      "Analyzing @{xUsername}'s swarm activity. Detected 3 potential settlement triggers."
+                    </p>
                   </div>
-                  <div style={{
-                    height: '4px',
-                    background: 'rgba(255,255,255,0.1)',
-                    borderRadius: '2px',
-                    marginTop: '10px',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{ width: '80%', height: '100%', background: 'var(--accent-secondary)', position: 'absolute' }}></div>
-                  </div>
-                  <p style={{ fontSize: '0.6rem', marginTop: '10px', opacity: 0.6 }}>2 more for Social Multiplier!</p>
                 </div>
+
+                <PendingOutgoing payments={pendingOutgoing} isDelegated={isDelegated} />
+                <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
               </div>
             </div>
-
-            {/* Pending Claims (for recipients) */}
-            <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
-
-            {/* How to Pay - minimal version */}
-            <HowToPayCard />
-          </>
+          </div>
         ) : currentPage === 'profile' ? (
           <ProfilePage
             xUsername={xUsername}
@@ -454,191 +284,32 @@ function WassyPayApp() {
             isDelegated={isDelegated}
             achievements={userProfile?.achievements || []}
             onCheckPayments={handleCheckForPayments}
-            onResetTutorial={() => {
-              setCurrentPage('home');
-              resetTutorial();
-            }}
             onBack={() => setCurrentPage('home')}
-          />
-        ) : currentPage === 'admin' && isAdmin ? (
-          <AdminDashboard
-            users={allUsers}
-            currentLottery={currentLottery}
-            onCreateLottery={createLottery}
-            onActivateLottery={activateLottery}
-            onSetLotteryPrize={setLotteryPrizeApi}
-            onDrawLottery={async () => {
-              const result = await drawLotteryWinner();
-              if (result.success) {
-                setSuccess(`🎉 Winner: @${result.winner.username}!`);
-
-                // Blast confetti!
-                confetti({
-                  particleCount: 150,
-                  spread: 70,
-                  origin: { y: 0.6 },
-                  colors: ['#fb7185', '#a855f7', '#fbbf24', '#34d399']
-                });
-              } else {
-                setError(result.error || 'Failed to draw winner');
-              }
-            }}
-            onClose={() => setCurrentPage('home')}
           />
         ) : currentPage === 'lottery' ? (
           <LotteryPage
             currentLottery={currentLottery}
             lotteryHistory={lotteryHistory}
-            eligibleUsers={allUsers || []}
-            userStats={userStats}
             userWallet={solanaWallet?.address}
             xUsername={xUsername}
             isClaiming={isClaimingPrize}
-            onClaim={async (id) => {
-              setIsClaimingPrize(true);
-              try {
-                // Ensure id is a string (lotteryId) and not a click event
-                const targetId = typeof id === 'string' ? id : currentLottery?.id;
-                const result = await claimLotteryPrize(targetId);
-                if (result.success) {
-                  setSuccess(`🎉 Prize claimed! Tx: ${result.txSignature?.slice(0, 8)}...`);
-                  fetchActiveLottery(); // Refresh current
-                  fetchLotteryHistory(); // Refresh history
-
-                  // Set win amount and show modal
-                  setLotteryWinAmount(currentLottery?.prizeAmount || 0);
-                  setShowLotteryWinModal(true);
-
-                  // Trigger confetti!
-                  setShowConfetti(true);
-                  setTimeout(() => setShowConfetti(false), 5000);
-                } else {
-                  setError(result.error || 'Failed to claim prize');
-                }
-              } finally {
-                setIsClaimingPrize(false);
-              }
-            }}
-            onRefresh={fetchActiveLottery}
-            onFetchHistory={fetchLotteryHistory}
+            onClaim={claimLotteryPrize}
             onBack={() => setCurrentPage('home')}
           />
-        ) : null}
-
-
-
-        {/* Footer */}
-        <Footer onShowTerms={() => setShowTerms(true)} />
-
-        {/* Modals */}
-        {lastClaimedPayment && (
-          <ShareSuccessModal
-            show={showShareModal}
-            onClose={() => setShowShareModal(false)}
-            payment={lastClaimedPayment}
-            xUsername={xUsername}
-            theme={theme}
+        ) : isAdmin && currentPage === 'admin' ? (
+          <AdminDashboard
+            users={allUsers}
+            currentLottery={currentLottery}
+            onClose={() => setCurrentPage('home')}
           />
-        )}
-        <LeaderboardModal
-          show={showLeaderboard}
-          onClose={() => setShowLeaderboard(false)}
-          users={allUsers}
-        />
-        <LotteryModal
-          show={showLotteryModal}
-          onClose={() => setShowLotteryModal(false)}
-          lottery={currentLottery}
-          eligibleUsers={allUsers?.filter(u => (u.total_sent || 0) > 0) || []}
-          userWallet={solanaWallet?.address}
-          xUsername={xUsername}
-          isClaiming={isClaimingPrize}
-          onClaim={async () => {
-            setIsClaimingPrize(true);
-            try {
-              const result = await claimLotteryPrize();
-              if (result.success) {
-                setSuccess(`🎉 Prize claimed! Tx: ${result.txSignature?.slice(0, 8)}...`);
-                setShowLotteryModal(false);
-                fetchActiveLottery();
-              } else {
-                setError(result.error || 'Failed to claim prize');
-              }
-            } finally {
-              setIsClaimingPrize(false);
-            }
-          }}
-        />
-        <AchievementsModal
-          show={showAchievements}
-          onClose={() => setShowAchievements(false)}
-          achievements={ACHIEVEMENTS}
-          unlockedIds={unlockedAchievements}
-        />
-        <AdminModal
-          show={showAdminPanel}
-          onClose={() => setShowAdminPanel(false)}
-          users={allUsers}
-        />
-        <StatsModal
-          show={showStats}
-          onClose={() => setShowStats(false)}
-          userStats={userStats}
-        />
-        <HistoryModal
-          show={showHistory}
-          onClose={() => setShowHistory(false)}
-          payments={payments}
-          xUsername={xUsername}
-        />
-        <TermsModal
-          show={showTerms}
-          onClose={() => setShowTerms(false)}
-        />
-        <LotteryWinModal
-          show={showLotteryWinModal}
-          onClose={() => setShowLotteryWinModal(false)}
-          prizeAmount={lotteryWinAmount}
-          theme={theme}
-        />
-      </div>
+        ) : null}
+      </main>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="mobile-only">
-        <MobileNav
-          activeItem={currentPage}
-          isAdmin={isAdmin}
-          onNavigate={(id) => {
-            switch (id) {
-              case 'home':
-                setCurrentPage('home');
-                setShowLeaderboard(false);
-                break;
-              case 'lottery':
-                setCurrentPage('lottery');
-                setShowLeaderboard(false);
-                break;
-              case 'profile':
-                setCurrentPage('profile');
-                setShowLeaderboard(false);
-                break;
-              case 'leaders':
-                setShowLeaderboard(true);
-                break;
-              case 'admin':
-                if (isAdmin) {
-                  setCurrentPage('admin');
-                  setShowLeaderboard(false);
-                }
-                break;
-            }
-          }}
-          accentColor={theme === 'light' ? '#a855f7' : '#31d7ff'}
-        />
-      </div>
+      <Footer onShowTerms={() => setShowTerms(true)} />
 
-
-    </div >
+      {/* Modals */}
+      <TermsModal show={showTerms} onClose={() => setShowTerms(false)} />
+    </div>
   );
 }
 

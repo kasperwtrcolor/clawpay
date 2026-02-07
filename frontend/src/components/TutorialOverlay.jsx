@@ -19,7 +19,7 @@ const TUTORIAL_STEPS = [
         id: 'howto',
         selector: '.howto-card',
         title: '🐦 How to Pay',
-        description: 'Send payments by tweeting! Mention @bot_wassy with the recipient and amount. Example: "@bot_wassy send @friend $5"',
+        description: 'Send payments by tweeting! Mention @bot_claw with the recipient and amount. Example: "@bot_claw send @friend $5"',
         position: 'left'
     },
     {
@@ -307,7 +307,7 @@ export function useTutorial() {
 
     useEffect(() => {
         // Check localStorage after component mounts
-        const hasSeenTutorial = localStorage.getItem('wassypay_tutorial_completed');
+        const hasSeenTutorial = localStorage.getItem('clawpay_tutorial_completed');
         if (!hasSeenTutorial) {
             // Small delay to let the app render first
             setTimeout(() => setShowTutorial(true), 1000);
@@ -316,12 +316,12 @@ export function useTutorial() {
     }, []);
 
     const completeTutorial = useCallback(() => {
-        localStorage.setItem('wassypay_tutorial_completed', 'true');
+        localStorage.setItem('clawpay_tutorial_completed', 'true');
         setShowTutorial(false);
     }, []);
 
     const resetTutorial = useCallback(() => {
-        localStorage.removeItem('wassypay_tutorial_completed');
+        localStorage.removeItem('clawpay_tutorial_completed');
         // Ensure state update triggers even if already on homepage
         setShowTutorial(false);
         setTimeout(() => setShowTutorial(true), 100);

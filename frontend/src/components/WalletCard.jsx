@@ -16,160 +16,96 @@ export function WalletCard({
 
     if (!solanaWallet) {
         return (
-            <div className="glass-panel" style={{ padding: '30px', marginBottom: '20px' }}>
-                <div className="mono label-subtle" style={{ marginBottom: '15px' }}>// WALLET_STATUS</div>
+            <div className="glass-panel" style={{ marginBottom: '30px' }}>
+                <div className="label-subtle">// VAULT_STATUS</div>
                 <div className="inset-panel" style={{ textAlign: 'center', padding: '40px' }}>
                     <div className="tx-spinner" style={{ margin: '0 auto 15px' }}></div>
-                    <div style={{ fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>INITIALIZING_SECURE_VAULT...</div>
-                    <div className="text-secondary" style={{ fontSize: '0.8rem' }}>
-                        Loading your embedded Solana wallet...
-                    </div>
+                    <div className="mono" style={{ fontWeight: 800 }}>INITIALIZING_SECURE_VAULT...</div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="glass-panel wallet-card" style={{ padding: '30px', marginBottom: '20px' }}>
-            <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// WALLET_STATUS</div>
+        <div className="glass-panel" style={{ marginBottom: '30px' }}>
+            <div className="label-subtle">// VAULT_STATUS</div>
 
-            {/* Balance Display */}
-            <div className="inset-panel" style={{ marginBottom: '25px' }}>
-                <div className="mono label-subtle" style={{ marginBottom: '8px', fontSize: '0.6rem' }}>CONNECTED_BALANCE</div>
-                <div className="mono" style={{ fontSize: '2.5rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+            <div className="inset-panel" style={{ marginBottom: '25px', background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>
+                <div className="label-subtle" style={{ background: 'var(--accent)', color: '#000', fontSize: '0.6rem' }}>CONNECTED_BALANCE</div>
+                <div className="mono" style={{ fontSize: '2.5rem', fontWeight: 900 }}>
                     ${walletBalance.toFixed(2)}
-                    <span className="text-muted" style={{ fontSize: '1rem', marginLeft: '10px' }}>USDC</span>
+                    <span style={{ fontSize: '1rem', marginLeft: '10px', opacity: 0.7 }}>USDC</span>
                 </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }} className="mono">
-                    <span>{walletBalance.toFixed(4)} USDC_NATIVE</span>
-                    <span style={{ color: needsGas ? 'var(--error)' : 'var(--text-muted)' }}>GAS: {solBalance.toFixed(4)} SOL</span>
+                <div style={{ fontSize: '0.75rem', marginTop: '10px', display: 'flex', justifyContent: 'space-between' }} className="mono">
+                    <span>{walletBalance.toFixed(4)} NATIVE</span>
+                    <span style={{ color: needsGas ? 'var(--error)' : 'inherit' }}>GAS: {solBalance.toFixed(4)} SOL</span>
                 </div>
             </div>
 
-            {/* SOL Gas Warning */}
             {needsGas && (
-                <div className="glass-panel" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'var(--error)', padding: '15px', marginBottom: '20px', borderRadius: '16px' }}>
-                    <div style={{ fontWeight: '700', fontSize: '0.8rem', color: 'var(--error)', marginBottom: '4px' }} className="mono">⚠ LOW_FEE_VAULT</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        You need ~0.005 SOL for transaction fees.
-                    </div>
+                <div className="inset-panel" style={{ background: 'rgba(255, 42, 109, 0.1)', border: '2px solid var(--error)', marginBottom: '25px' }}>
+                    <div className="mono" style={{ fontWeight: 800, color: 'var(--error)' }}>⚠ LOW_GAS_WARNING</div>
+                    <p className="mono" style={{ fontSize: '0.75rem', marginTop: '5px' }}>You need ~0.005 SOL to execute settlements.</p>
                 </div>
             )}
 
-            {/* Address */}
             <div style={{ marginBottom: '25px' }}>
-                <div className="mono label-subtle" style={{ marginBottom: '8px', fontSize: '0.6rem' }}>WALLET_ID</div>
-                <div className="inset-panel" style={{ padding: '12px 15px', fontSize: '0.7rem' }}>
-                    <span className="mono text-glow" style={{ wordBreak: 'break-all' }}>{solanaWallet.address}</span>
+                <div className="label-subtle">VAULT_ADDRESS</div>
+                <div className="inset-panel" style={{ padding: '12px', fontSize: '0.7rem' }}>
+                    <span className="mono" style={{ wordBreak: 'break-all' }}>{solanaWallet.address}</span>
                 </div>
             </div>
 
-            {/* Authorization Section */}
-            {isDelegated ? (
-                <div className="glass-panel" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'var(--success)', padding: '20px', marginBottom: '20px', borderRadius: '20px' }}>
-                    <div style={{ fontWeight: '700', fontSize: '0.8rem', color: 'var(--success)', marginBottom: '8px' }} className="mono">✓ VAULT_AUTHORIZED</div>
-                    <div style={{ fontSize: '0.9rem', marginBottom: '15px' }}>
-                        Limit: <span className="mono" style={{ fontWeight: '700' }}>${delegationAmount} USDC</span>
-                    </div>
-
-                    <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '15px' }}>
-                        <div className="mono label-subtle" style={{ fontSize: '0.6rem', marginBottom: '10px', color: 'var(--text-secondary)' }}>
-                            UPDATE_SPENDING_LIMIT
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input
-                                type="number"
-                                value={delegationAmount}
-                                onChange={(e) => setDelegationAmount(parseFloat(e.target.value) || 0)}
-                                className="mono"
-                                style={{
-                                    flex: 1,
-                                    padding: '10px 15px',
-                                    background: 'var(--bg-inset)',
-                                    border: '1px solid var(--border-medium)',
-                                    borderRadius: '12px',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '0.9rem'
-                                }}
-                            />
-                            <button
-                                onClick={() => onAuthorize(delegationAmount)}
-                                disabled={isAuthorizing}
-                                className="btn btn-primary"
-                                style={{ padding: '0', width: '45px', height: '45px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                                title="Update Spending Limit"
-                            >
-                                {isAuthorizing ? (
-                                    <div className="tx-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
-                                ) : (
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+            <div className="inset-panel" style={{ marginBottom: '25px', background: isDelegated ? 'rgba(0, 255, 136, 0.05)' : 'transparent' }}>
+                <div className="label-subtle" style={{ background: isDelegated ? 'var(--success)' : 'var(--accent)', color: '#000' }}>
+                    {isDelegated ? '✓ DELEGATION_ACTIVE' : '⚠ AUTHORIZATION_PENDING'}
                 </div>
-            ) : (
-                <div className="glass-panel" style={{ borderStyle: 'dashed', borderColor: 'var(--accent)', padding: '20px', marginBottom: '20px', borderRadius: '20px' }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: '700', marginBottom: '15px' }} className="mono">
-                        ⚠ LINK_AUTHORIZATION_REQUIRED
-                    </div>
 
-                    <div style={{ marginBottom: '15px' }}>
-                        <label className="mono label-subtle" style={{ display: 'block', marginBottom: '8px', fontSize: '0.6rem' }}>
-                            LIMIT_AMOUNT (USDC)
-                        </label>
+                <div style={{ marginTop: '15px' }}>
+                    <label className="mono" style={{ display: 'block', fontSize: '0.7rem', marginBottom: '8px', fontWeight: 800 }}>SPENDING_LIMIT (USDC)</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
                         <input
                             type="number"
                             value={delegationAmount}
                             onChange={(e) => setDelegationAmount(parseFloat(e.target.value) || 0)}
                             className="mono"
                             style={{
-                                width: '100%',
-                                padding: '12px 15px',
-                                background: 'var(--bg-inset)',
-                                border: '1px solid var(--border-medium)',
-                                borderRadius: '12px',
+                                flex: 1,
+                                padding: '12px',
+                                border: 'var(--border)',
+                                background: 'var(--bg-surface)',
                                 color: 'var(--text-primary)',
-                                fontSize: '1rem'
+                                fontWeight: 800
                             }}
                         />
+                        <button
+                            onClick={() => onAuthorize(delegationAmount)}
+                            disabled={isAuthorizing}
+                            className="btn btn-primary"
+                            style={{ padding: '0 20px', boxShadow: '2px 2px 0px #000' }}
+                        >
+                            {isAuthorizing ? '...' : 'SAVE'}
+                        </button>
                     </div>
-
-                    <button
-                        onClick={() => onAuthorize(delegationAmount)}
-                        disabled={isAuthorizing || solBalance === 0}
-                        className="btn btn-accent"
-                        style={{ width: '100%', borderRadius: '12px' }}
-                    >
-                        {isAuthorizing ? 'AUTHORIZING...' : (solBalance === 0 ? 'GAS REQUIRED' : 'AUTHORIZE VAULT')}
-                    </button>
                 </div>
-            )}
+            </div>
 
-            {/* Action Buttons */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '20px' }}>
-                <button onClick={onFundWallet} className="btn btn-accent" style={{ borderRadius: '12px' }}>
-                    FUND
-                </button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <button onClick={onFundWallet} className="btn btn-accent" style={{ fontWeight: 800 }}>FUND_VAULT</button>
                 <a
                     href={`https://solscan.io/account/${solanaWallet.address}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-primary"
-                    style={{ borderRadius: '12px', textDecoration: 'none' }}
+                    className="btn"
+                    style={{ fontWeight: 800, textDecoration: 'none', justifyContent: 'center' }}
                 >
-                    SOLSCAN ↗
+                    VIEW_SOLSCAN
                 </a>
             </div>
 
             {onExportWallet && (
-                <button onClick={onExportWallet} className="btn" style={{ width: '100%', marginTop: '12px', background: 'transparent', border: '1px solid var(--border-medium)', borderRadius: '12px', fontSize: '0.75rem' }}>
-                    MANAGE WALLET
-                </button>
+                <button onClick={onExportWallet} className="btn" style={{ width: '100%', marginTop: '15px', fontSize: '0.75rem' }}>MANAGE_KEYS</button>
             )}
         </div>
     );
 }
-
