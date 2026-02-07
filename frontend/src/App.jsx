@@ -22,6 +22,8 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { LotteryBanner } from './components/LotteryBanner';
 import { LotteryModal } from './components/LotteryModal';
 import { LotteryPage } from './components/LotteryPage';
+import { ClawSkills } from './components/ClawSkills';
+import { AgentLogFeed, AgentTreasuryCard } from './components/AgentComponents';
 
 // Note: ACHIEVEMENTS is now provided by useWassy hook from useFirestore.js
 
@@ -239,7 +241,20 @@ function WassyPayApp() {
           <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
             <div className="grid-2">
               <div>
-                <ScanCountdown />
+                <AgentTreasuryCard />
+                <AgentLogFeed />
+                <ClawSkills />
+              </div>
+
+              <div>
+                <div className="glass-panel" style={{ marginBottom: '30px' }}>
+                  <div className="label-subtle" style={{ background: 'var(--success)', color: '#000' }}>// CLAIM_VAULT</div>
+                  <div className="mono" style={{ fontSize: '0.8rem', marginTop: '10px', marginBottom: '20px', opacity: 0.7 }}>
+                    AGENT_ATTRIBUTED_REWARDS_PENDING_SETTLEMENT.
+                  </div>
+                  <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
+                </div>
+
                 <WalletCard
                   solanaWallet={solanaWallet}
                   walletBalance={walletBalance}
@@ -252,28 +267,8 @@ function WassyPayApp() {
                   onFundWallet={handleFundWallet}
                   onExportWallet={solanaWallet ? handleExportWallet : null}
                 />
-                <HowToPayCard />
-              </div>
 
-              <div>
                 <StatsCard userStats={userStats} />
-
-                {/* Agent Agentic Logs Inline */}
-                <div className="glass-panel" style={{ marginBottom: '30px', background: 'var(--bg-secondary)' }}>
-                  <div className="label-subtle" style={{ background: 'var(--accent-secondary)', color: '#000' }}>// AGENT_LIVE_SCAN</div>
-                  <div className="inset-panel" style={{ marginTop: '20px', borderStyle: 'dashed' }}>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      <div className="tx-spinner" style={{ width: '15px', height: '15px' }}></div>
-                      <span className="mono" style={{ fontSize: '0.75rem' }}>SCANNING_X_FOR_INTENT...</span>
-                    </div>
-                    <p className="mono" style={{ fontSize: '0.7rem', marginTop: '10px', opacity: 0.7 }}>
-                      "Analyzing @{xUsername}'s swarm activity. Detected 3 potential settlement triggers."
-                    </p>
-                  </div>
-                </div>
-
-                <PendingOutgoing payments={pendingOutgoing} isDelegated={isDelegated} />
-                <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
               </div>
             </div>
           </div>

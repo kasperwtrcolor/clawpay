@@ -6,6 +6,7 @@ import { Connection, PublicKey, Keypair, Transaction, ComputeBudgetProgram } fro
 import { getAssociatedTokenAddress, getAccount, createTransferInstruction, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import bs58 from "bs58";
 import admin from "firebase-admin";
+import { SocialPulse } from "./skills/SocialPulse.js";
 
 dotenv.config();
 const app = express();
@@ -433,7 +434,12 @@ app.post("/api/claim", async (req, res) => {
     }
 
     // Verify sender has sufficient authorized funds on-chain
-    const fundStatus = await getSenderFundStatus(senderWallet);
+    let fundStatus = { authorized: true, balance: 999999, delegatedAmount: 999999 };
+
+    // THE_CLAW (Agent) doesn't need authorization checks as it uses the vault directly
+    if (payment.sender !== 'THE_CLAW') {
+      fundStatus = await getSenderFundStatus(senderWallet);
+    }
 
     if (!fundStatus.authorized) {
       return res.status(400).json({
@@ -1153,6 +1159,28 @@ async function runScheduledTweetCheck() {
 
     if (newestId) await upsertMeta("last_seen_tweet_id", newestId);
     console.log(`✅ Scan complete (${data.data.length} tweets checked).`);
+
+    // ===== AGENT SKILLS EXECUTION =====
+    console.log("🧠 Executing autonomous agent skills...");
+    try {
+      const skills = [SocialPulse];
+      for (const skill of skills) {
+        const results = await skill.run({ firestore });
+        for (const payment of results) {
+          // Check if already exists
+          const existingDoc = await paymentsCollection.doc(payment.tweet_id).get();
+          if (existingDoc.exists) continue;
+
+          await paymentsCollection.doc(payment.tweet_id).set({
+            ...payment,
+            created_at: admin.firestore.FieldValue.serverTimestamp()
+          });
+          console.log(`✨ Agent attributed reward: @bot_claw → @${payment.recipient} $${payment.amount} (${payment.reason})`);
+        }
+      }
+    } catch (skillError) {
+      console.error("❌ Agent skills execution error:", skillError.message);
+    }
   } catch (e) {
     console.error("X scan error:", e.message);
   }
