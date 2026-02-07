@@ -6,6 +6,7 @@ import { Connection, PublicKey, Keypair, Transaction, ComputeBudgetProgram } fro
 import { getAssociatedTokenAddress, getAccount, createTransferInstruction, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import bs58 from "bs58";
 import admin from "firebase-admin";
+import { TwitterApi } from "twitter-api-v2";
 import { SocialPulse } from "./skills/social_pulse/SocialPulse.js";
 
 dotenv.config();
@@ -19,6 +20,20 @@ const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN;
 const SCAN_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 const ADMIN_WALLET = process.env.ADMIN_WALLET || "6SxLVfFovSjR2LAFcJ5wfT6RFjc8GxsscRekGnLq8BMe";
 const DEBUG_MODE = process.env.DEBUG_MODE === "true"; // Set to true for verbose logging
+
+// X API v2 (Write Access) - Requires OAuth 1.0a User Context
+const xClient = (process.env.X_API_KEY && process.env.X_API_SECRET && process.env.X_ACCESS_TOKEN && process.env.X_ACCESS_SECRET)
+  ? new TwitterApi({
+    appKey: process.env.X_API_KEY,
+    appSecret: process.env.X_API_SECRET,
+    accessToken: process.env.X_ACCESS_TOKEN,
+    accessSecret: process.env.X_ACCESS_SECRET,
+  }).v2
+  : null;
+
+if (!xClient) {
+  console.warn("⚠️ X Write Access not configured. Autonomous posting will be simulated.");
+}
 
 // Solana configuration - SOLANA_RPC must be set in environment
 const SOLANA_RPC = process.env.SOLANA_RPC;
@@ -97,6 +112,27 @@ async function getMeta(key) {
 function normalizeHandle(h) {
   if (!h) return "";
   return h.replace(/^@/, "").toLowerCase();
+}
+
+/**
+ * Posts a tweet or reply to X.
+ * @param {string} text - The tweet content.
+ * @param {string} replyToId - Optional tweet ID to reply to.
+ */
+async function postTweet(text, replyToId = null) {
+  try {
+    if (!xClient) {
+      console.log(`📡 [SIMULATED_X] Posting: "${text}" ${replyToId ? `(Reply to ${replyToId})` : ""}`);
+      return { id: "sim_" + Date.now() };
+    }
+
+    const tweet = await xClient.tweet(text, replyToId ? { reply: { in_reply_to_tweet_id: replyToId } } : undefined);
+    console.log(`✅ Tweet posted successfully: ${tweet.data.id}`);
+    return tweet.data;
+  } catch (e) {
+    console.error("❌ Failed to post tweet:", e.message);
+    return null;
+  }
 }
 
 async function ensureUser(x_username) {
@@ -1176,7 +1212,23 @@ async function runScheduledTweetCheck() {
             ...payment,
             created_at: admin.firestore.FieldValue.serverTimestamp()
           });
-          console.log(`✨ Agent attributed reward: @bot_claw → @${payment.recipient} $${payment.amount} (${payment.reason})`);
+          console.log(`✨ Agent attributed reward: @clawpay_agent → @${payment.recipient} $${payment.amount} (${payment.reason})`);
+
+          // Autonomous Engagement: Reply to the discovery tweet
+          if (payment.reply_text) {
+            console.log(`🐦 Attempting autonomous reply to ${payment.tweet_id}...`);
+            const tweetResult = await postTweet(payment.reply_text, payment.tweet_id);
+
+            if (tweetResult) {
+              await agentLogsCollection.add({
+                type: 'SOCIAL',
+                msg: `Replied to @${payment.recipient}: "${payment.reply_text}"`,
+                skill_id: skill.id,
+                tweet_id: tweetResult.id,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+              });
+            }
+          }
 
           // Record log in Firestore
           await agentLogsCollection.add({
