@@ -1,0 +1,32 @@
+{
+  "name": "wassy-pay-standalone",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@devfunlabs/web-sdk": "latest",
+    "@privy-io/react-auth": "^3.10.1",
+    "@solana-program/memo": "^0.10.0",
+    "@solana/kit": "^5.4.0",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
+    "canvas-confetti": "^1.9.4",
+    "firebase": "^12.8.0",
+    "lucide-react": "latest",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.14",
+    "vite": "^6.0.0",
+    "vite-plugin-node-polyfills": "^0.24.0"
+  }
+}
