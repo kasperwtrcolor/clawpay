@@ -1,9 +1,11 @@
 /* Google Fonts - Space Grotesk + JetBrains Mono */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
+/* ===== DARK THEME (Default) ===== */
 :root {
-  /* Tectonic Monolith Color Palette */
   --monolith-bg: #0a0a0c;
+  --bg-primary: #0a0a0c;
+  --bg-secondary: #111115;
   --slate-950: #020617;
   --steel: #1e293b;
   --slab-gradient: linear-gradient(135deg, #111115 0%, #050505 100%);
@@ -12,17 +14,39 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
+  --accent: #00f2ff;
+  --accent-secondary: #facc15;
   --industrial-cyan: #00f2ff;
   --industrial-yellow: #facc15;
   --success: #22c55e;
   --error: #ef4444;
 
+  --border: 2px solid var(--steel);
   --border-subtle: 1px solid rgba(255, 255, 255, 0.1);
   --border-industrial: 2px solid var(--steel);
   --shadow-industrial: 4px 4px 0px #000;
 
   --radius: 0px;
   --transition: all 0.15s ease;
+}
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --monolith-bg: #f8fafc;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #e2e8f0;
+  --slate-950: #f1f5f9;
+  --steel: #cbd5e1;
+  --slab-gradient: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --border: 2px solid #334155;
+  --border-subtle: 1px solid rgba(0, 0, 0, 0.1);
+  --border-industrial: 2px solid #334155;
+  --shadow-industrial: 4px 4px 0px rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -32,13 +56,14 @@
 }
 
 body {
-  background-color: var(--monolith-bg);
+  background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Space Grotesk', sans-serif;
   overflow-x: hidden;
   line-height: 1.5;
   min-height: 100vh;
   scroll-behavior: smooth;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Typography */
@@ -51,6 +76,7 @@ h4 {
   text-transform: uppercase;
   letter-spacing: -0.02em;
   margin-bottom: 1rem;
+  color: var(--text-primary);
 }
 
 .mono {
@@ -87,9 +113,13 @@ h4 {
 }
 
 .inset-panel {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.2);
   border: var(--border-subtle);
   padding: 20px;
+}
+
+[data-theme="light"] .inset-panel {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 /* Legacy glass-panel mapped to slab */
@@ -132,9 +162,9 @@ h4 {
 
 .btn:hover {
   background: var(--text-primary);
-  color: var(--monolith-bg);
+  color: var(--bg-primary);
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px #000;
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.3);
 }
 
 .btn:active {
@@ -150,12 +180,18 @@ h4 {
 
 .btn-primary:hover {
   background: #00d4e0;
+  color: #000;
 }
 
 .btn-accent {
   background: var(--industrial-yellow);
   color: #000;
   border-color: var(--industrial-yellow);
+}
+
+.btn-accent:hover {
+  background: #eab308;
+  color: #000;
 }
 
 /* ===== UTILITIES ===== */
@@ -286,6 +322,7 @@ h4 {
   height: 20px;
   border: 3px solid var(--text-primary);
   border-right-color: transparent;
+  border-radius: 50%;
   animation: spin 0.6s steps(8) infinite;
 }
 
@@ -299,7 +336,12 @@ h4 {
   }
 }
 
-/* ===== MOBILE ===== */
+/* ===== RESPONSIVE ===== */
+/* Hide mobile nav on desktop */
+.mobile-only {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
 
   .grid-2,
@@ -309,6 +351,10 @@ h4 {
 
   .desktop-only {
     display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
   }
 }
 
@@ -325,6 +371,10 @@ h4 {
   z-index: 50;
 }
 
+[data-theme="light"] .grain {
+  opacity: 0.02;
+}
+
 /* ===== STEP NUMBERS ===== */
 .step-number {
   font-size: 4rem;
@@ -334,6 +384,7 @@ h4 {
   position: absolute;
   right: 10px;
   top: 0;
+  color: var(--text-primary);
 }
 
 /* ===== TOAST SYSTEM ===== */
@@ -353,4 +404,30 @@ h4 {
   box-shadow: 8px 8px 0px var(--industrial-cyan);
   padding: 15px 25px;
   font-weight: 700;
+}
+
+/* ===== NAV PILLS ===== */
+.nav-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav-pill {
+  padding: 8px 16px;
+  background: transparent;
+  border: var(--border-industrial);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.nav-pill.active,
+.nav-pill:hover {
+  background: var(--industrial-cyan);
+  color: #000;
+  border-color: var(--industrial-cyan);
 }

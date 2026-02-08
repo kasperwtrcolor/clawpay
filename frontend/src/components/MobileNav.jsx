@@ -26,7 +26,7 @@ export function MobileNav({
 
     return (
         <nav
-            className="mobile-nav"
+            className="mobile-nav mobile-only"
             style={{
                 position: 'fixed',
                 bottom: '20px',
@@ -38,7 +38,7 @@ export function MobileNav({
                 zIndex: 1000,
                 background: 'var(--bg-primary)',
                 border: 'var(--border)',
-                boxShadow: '4px 4px 0px var(--text-primary)'
+                boxShadow: 'var(--shadow-industrial)'
             }}
         >
             {navItems.map((item) => {
