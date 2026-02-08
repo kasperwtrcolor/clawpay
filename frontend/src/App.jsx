@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { PrivyProvider } from '@privy-io/react-auth';
 import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
-import { PRIVY_APP_ID, SOLANA_RPC } from './constants';
+import { PRIVY_APP_ID, SOLANA_RPC, AGENT_HANDLE } from './constants';
 import { useWassy } from './hooks/useWassy';
 import './index.css';
 
@@ -73,7 +73,8 @@ function WassyPayApp() {
     setLotteryPrize: setLotteryPrizeApi,
     drawLotteryWinner,
     claimLotteryPrize,
-    agentLogs
+    agentLogs,
+    agentTreasury
   } = useWassy();
 
 
