@@ -206,37 +206,46 @@ function WassyPayApp() {
   return (
     <div className="dashboard-v2" style={{
       minHeight: '100vh',
-      background: 'var(--bg-primary)',
-      color: 'var(--text-primary)',
-      transition: 'background-color 0.3s ease'
+      background: 'var(--monolith-bg)',
+      color: 'var(--text-primary)'
     }}>
+      <div className="grain"></div>
+
       {/* Transaction Overlay */}
       {(loading || isAuthorizing || isClaiming || isClaimingPrize) && (
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)',
           zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column'
         }}>
-          <div className="tx-spinner" style={{ width: '60px', height: '60px', border: '5px solid #fff', borderRightColor: 'transparent', marginBottom: '30px' }}></div>
-          <div className="mono" style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>EXECUTING_SETTLEMENT...</div>
+          <div className="scan-line" style={{ position: 'absolute', top: 0 }}></div>
+          <div className="tx-spinner" style={{ width: '60px', height: '60px', border: '5px solid var(--industrial-cyan)', borderRightColor: 'transparent', marginBottom: '30px' }}></div>
+          <div className="mono" style={{ color: 'var(--industrial-cyan)', fontSize: '1.2rem', fontWeight: 700 }}>EXECUTING_SETTLEMENT...</div>
         </div>
       )}
 
       {/* Header */}
       <nav style={{
-        position: 'sticky', top: 0, background: 'var(--bg-primary)',
-        borderBottom: 'var(--border)', padding: '20px 40px', zIndex: 100,
+        position: 'sticky', top: 0,
+        background: 'rgba(0,0,0,0.8)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: 'var(--border-subtle)',
+        padding: '16px 24px',
+        zIndex: 100,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center'
       }}>
-        <div className="mono" style={{ fontWeight: 900, fontSize: '1.4rem' }}>CLAW_DASHBOARD</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ width: '32px', height: '32px', background: 'var(--industrial-cyan)', clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}></div>
+          <span className="mono" style={{ fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.05em' }}>CLAW_DASHBOARD</span>
+        </div>
 
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <div className="desktop-only" style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={() => setCurrentPage('home')} className={`btn ${currentPage === 'home' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>HOME</button>
-            <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>PROFILE</button>
-            <button onClick={() => setCurrentPage('lottery')} className={`btn ${currentPage === 'lottery' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>SWARM_DIST</button>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div className="desktop-only" style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => setCurrentPage('home')} className={`btn ${currentPage === 'home' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.65rem' }}>HOME</button>
+            <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.65rem' }}>PROFILE</button>
+            <button onClick={() => setCurrentPage('lottery')} className={`btn ${currentPage === 'lottery' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.65rem' }}>SWARM_DIST</button>
           </div>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button onClick={logout} className="btn btn-accent" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>LOGOUT</button>
+          <button onClick={logout} className="btn btn-accent" style={{ padding: '8px 16px', fontSize: '0.65rem' }}>LOGOUT</button>
         </div>
       </nav>
 
