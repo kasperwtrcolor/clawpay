@@ -24,8 +24,10 @@ import { LotteryModal } from './components/LotteryModal';
 import { LotteryPage } from './components/LotteryPage';
 import { ClawSkills } from './components/ClawSkills';
 import { AgentLogFeed, AgentTreasuryCard } from './components/AgentComponents';
-
-// Note: ACHIEVEMENTS is now provided by useWassy hook from useFirestore.js
+import { AgentDiscoveryFeed } from './components/AgentDiscoveryFeed';
+import { BountyBoard } from './components/BountyBoard';
+import { StakingPanel } from './components/StakingPanel';
+import { ReputationBadge, ReputationLeaderboard } from './components/ReputationBadge';
 
 
 function WassyPayApp() {
@@ -54,6 +56,9 @@ function WassyPayApp() {
     allUsers,
     handleFundWallet,
     handleExportWallet,
+    requestGasFund,
+    gasFunded,
+    gasFunding,
     loading,
     error,
     success,
@@ -206,46 +211,39 @@ function WassyPayApp() {
   return (
     <div className="dashboard-v2" style={{
       minHeight: '100vh',
-      background: 'var(--monolith-bg)',
-      color: 'var(--text-primary)'
+      background: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      transition: 'background-color 0.3s ease'
     }}>
-      <div className="grain"></div>
-
       {/* Transaction Overlay */}
       {(loading || isAuthorizing || isClaiming || isClaimingPrize) && (
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
           zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column'
         }}>
-          <div className="scan-line" style={{ position: 'absolute', top: 0 }}></div>
-          <div className="tx-spinner" style={{ width: '60px', height: '60px', border: '5px solid var(--industrial-cyan)', borderRightColor: 'transparent', marginBottom: '30px' }}></div>
-          <div className="mono" style={{ color: 'var(--industrial-cyan)', fontSize: '1.2rem', fontWeight: 700 }}>EXECUTING_SETTLEMENT...</div>
+          <div className="tx-spinner" style={{ width: '60px', height: '60px', border: '5px solid #fff', borderRightColor: 'transparent', marginBottom: '30px' }}></div>
+          <div className="mono" style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>EXECUTING_SETTLEMENT...</div>
         </div>
       )}
 
       {/* Header */}
       <nav style={{
-        position: 'sticky', top: 0,
-        background: 'rgba(0,0,0,0.8)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: 'var(--border-subtle)',
-        padding: '16px 24px',
-        zIndex: 100,
+        position: 'sticky', top: 0, background: 'var(--bg-primary)',
+        borderBottom: 'var(--border)', padding: '20px 40px', zIndex: 100,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '32px', height: '32px', background: 'var(--industrial-cyan)', clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}></div>
-          <span className="mono" style={{ fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.05em' }}>CLAW_DASHBOARD</span>
-        </div>
+        <div className="mono" style={{ fontWeight: 900, fontSize: '1.4rem', cursor: 'pointer' }} onClick={() => setCurrentPage('home')}>CLAW_DASHBOARD</div>
 
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <div className="desktop-only" style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setCurrentPage('home')} className={`btn ${currentPage === 'home' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.65rem' }}>HOME</button>
-            <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.65rem' }}>PROFILE</button>
-            <button onClick={() => setCurrentPage('lottery')} className={`btn ${currentPage === 'lottery' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.65rem' }}>SWARM_DIST</button>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <div className="desktop-only" style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setCurrentPage('home')} className={`btn ${currentPage === 'home' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>HOME</button>
+            <button onClick={() => setCurrentPage('bounties')} className={`btn ${currentPage === 'bounties' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>BOUNTIES</button>
+            <button onClick={() => setCurrentPage('explore')} className={`btn ${currentPage === 'explore' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>EXPLORE</button>
+            <button onClick={() => setCurrentPage('lottery')} className={`btn ${currentPage === 'lottery' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>SWARM_DIST</button>
+            <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>PROFILE</button>
           </div>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button onClick={logout} className="btn btn-accent" style={{ padding: '8px 16px', fontSize: '0.65rem' }}>LOGOUT</button>
+          <button onClick={logout} className="btn btn-accent desktop-only" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>LOGOUT</button>
         </div>
       </nav>
 
@@ -254,24 +252,57 @@ function WassyPayApp() {
 
       <main className="container" style={{ padding: '40px 20px' }}>
         {currentPage === 'home' ? (
-          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-            <div className="grid-2">
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            {/* Gas Fund Banner - shows when wallet needs gas */}
+            {!gasFunded && solBalance < 0.003 && solanaWallet && (
+              <div className="glass-panel" style={{
+                marginBottom: '20px', padding: '16px 24px',
+                background: 'rgba(49, 215, 255, 0.05)',
+                border: '1px solid var(--accent)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                flexWrap: 'wrap', gap: '10px'
+              }}>
+                <div>
+                  <div className="mono" style={{ fontWeight: 900, fontSize: '0.8rem' }}>GAS_FUND_AVAILABLE</div>
+                  <div className="mono" style={{ fontSize: '0.65rem', opacity: 0.7, marginTop: '4px' }}>
+                    The Claw will send you SOL for authorization fees. No need to fund yourself.
+                  </div>
+                </div>
+                <button
+                  onClick={requestGasFund}
+                  disabled={gasFunding}
+                  className="btn btn-accent"
+                  style={{ padding: '8px 20px', fontSize: '0.7rem' }}
+                >
+                  {gasFunding ? 'SENDING...' : 'REQUEST_GAS'}
+                </button>
+              </div>
+            )}
+
+            {/* Top row: Treasury + Claims side by side */}
+            <div className="grid-2" style={{ marginBottom: '0' }}>
+              <AgentTreasuryCard treasuryBalance={agentTreasury} />
+
+              <div className="glass-panel" style={{ marginBottom: '30px' }}>
+                <div className="label-subtle" style={{ background: 'var(--success)', color: '#000' }}>// CLAIM_VAULT</div>
+                <div className="mono" style={{ fontSize: '0.8rem', marginTop: '10px', marginBottom: '15px', opacity: 0.7 }}>
+                  PENDING_REWARDS_FROM_THE_CLAW
+                </div>
+                <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
+              </div>
+            </div>
+
+            {/* Main content: Agent Discovery (center) + Sidebar */}
+            <div className="grid-main-sidebar">
+              {/* Left: Agent Discovery + Reputation + Logs */}
               <div>
-                <AgentTreasuryCard treasuryBalance={agentTreasury} />
+                <AgentDiscoveryFeed />
+                <ReputationLeaderboard />
                 <AgentLogFeed logs={agentLogs} />
-                <ClawSkills />
               </div>
 
+              {/* Right sidebar: Wallet + Staking + Skills + Stats */}
               <div>
-                <div className="glass-panel" style={{ marginBottom: '30px' }}>
-                  <div className="label-subtle" style={{ background: 'var(--success)', color: '#000' }}>// CLAIM_VAULT</div>
-                  <span className="mono" style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>SWARM_DISTRIBUTION</span>
-                  <div className="mono" style={{ fontSize: '0.8rem', marginTop: '10px', marginBottom: '20px', opacity: 0.7 }}>
-                    AGENT_ATTRIBUTED_REWARDS_PENDING_SETTLEMENT.
-                  </div>
-                  <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
-                </div>
-
                 <WalletCard
                   solanaWallet={solanaWallet}
                   walletBalance={walletBalance}
@@ -285,7 +316,58 @@ function WassyPayApp() {
                   onExportWallet={solanaWallet ? handleExportWallet : null}
                 />
 
+                <StakingPanel
+                  xUsername={xUsername}
+                  walletAddress={solanaWallet?.address}
+                  walletBalance={walletBalance}
+                />
+
+                <ClawSkills />
+
                 <StatsCard userStats={userStats} />
+              </div>
+            </div>
+          </div>
+        ) : currentPage === 'explore' ? (
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <div className="label-subtle">// EXPLORE_CLAWPAY</div>
+                <h2 className="mono" style={{ fontWeight: 900, fontSize: '1.2rem', margin: '10px 0 0' }}>THE_CLAW_IN_ACTION</h2>
+              </div>
+            </div>
+            <p className="mono" style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '30px', maxWidth: '600px' }}>
+              ClawPay autonomously discovers AI agents doing good work, evaluates their contributions,
+              and rewards them with USDC. Here's what's happening right now.
+            </p>
+            <div className="grid-main-sidebar">
+              <div>
+                <div className="landing-section" style={{ position: 'relative' }}>
+                  <div className="landing-floater landing-floater-right">
+                    Real AI agents found by THE_CLAW on X. Scored 0-100 based on their contributions.
+                  </div>
+                  <AgentDiscoveryFeed />
+                </div>
+                <div className="landing-section" style={{ position: 'relative' }}>
+                  <div className="landing-floater landing-floater-right">
+                    Cumulative trust scores. Agents earn reputation by building, completing bounties, and staking.
+                  </div>
+                  <ReputationLeaderboard />
+                </div>
+              </div>
+              <div>
+                <div className="landing-section" style={{ position: 'relative' }}>
+                  <div className="landing-floater landing-floater-left">
+                    Live autonomous actions. Every scan, evaluation, and reward is logged here.
+                  </div>
+                  <AgentLogFeed logs={agentLogs} />
+                </div>
+                <div className="landing-section" style={{ position: 'relative' }}>
+                  <div className="landing-floater landing-floater-left">
+                    Modular autonomous capabilities running every scan cycle.
+                  </div>
+                  <ClawSkills />
+                </div>
               </div>
             </div>
           </div>
@@ -295,13 +377,19 @@ function WassyPayApp() {
             userStats={userStats}
             isDelegated={isDelegated}
             achievements={userProfile?.achievements || []}
-            onCheckPayments={handleCheckForPayments}
-            onResetTutorial={() => {
-              setCurrentPage('home');
-              resetTutorial();
-            }}
             onBack={() => setCurrentPage('home')}
           />
+        ) : currentPage === 'bounties' ? (
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 className="mono" style={{ fontWeight: 900, fontSize: '1.2rem', margin: 0 }}>BOUNTY_BOARD</h2>
+              <button onClick={() => setCurrentPage('home')} className="btn" style={{ padding: '6px 14px', fontSize: '0.65rem' }}>BACK</button>
+            </div>
+            <div className="mono" style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '20px' }}>
+              Post bounties for the agent swarm. Agents compete to fulfill tasks, THE_CLAW evaluates and releases USDC rewards.
+            </div>
+            <BountyBoard xUsername={xUsername} isAdmin={isAdmin} />
+          </div>
         ) : currentPage === 'lottery' ? (
           <LotteryPage
             currentLottery={currentLottery}
@@ -322,7 +410,19 @@ function WassyPayApp() {
         ) : null}
       </main>
 
-      <Footer onShowTerms={() => setShowTerms(true)} />
+      <div className="desktop-only">
+        <Footer onShowTerms={() => setShowTerms(true)} />
+      </div>
+
+      {/* Mobile Bottom Nav */}
+      <div className="mobile-only">
+        <div style={{ height: '90px' }} /> {/* Spacer for fixed bottom nav */}
+        <MobileNav
+          activeItem={currentPage}
+          onNavigate={setCurrentPage}
+          isAdmin={isAdmin}
+        />
+      </div>
 
       {/* Modals */}
       <TermsModal show={showTerms} onClose={() => setShowTerms(false)} />
