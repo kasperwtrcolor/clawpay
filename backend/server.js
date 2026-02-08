@@ -96,6 +96,8 @@ const metaCollection = firestore.collection("meta");
 const agentLogsCollection = firestore.collection("agent_logs");
 const discoveredAgentsCollection = firestore.collection("discovered_agents");
 const gasFundedCollection = firestore.collection("gas_funded_wallets");
+const bountiesCollection = firestore.collection("bounties");
+const stakesCollection = firestore.collection("agent_stakes");
 
 // Run scan at boot
 setTimeout(() => {
@@ -264,6 +266,14 @@ function parsePaymentCommand(text) {
   // Format C: pay @user $5
   const c = t.match(/pay\s+@(\w+)\s*\$?\s*([\d.]+)/i);
   if (c) return { recipient: c[1], amount: parseFloat(c[2]) };
+
+  // Format D: fund @user $5 for <reason> (agent-to-agent payments)
+  const d = t.match(/fund\s+@(\w+)\s*\$?\s*([\d.]+)(?:\s+for\s+(.+))?/i);
+  if (d) return { recipient: d[1], amount: parseFloat(d[2]), reason: d[3]?.trim() || null, isAgentPayment: true };
+
+  // Format E: tip @user $5 (quick agent tips)
+  const e = t.match(/tip\s+@(\w+)\s*\$?\s*([\d.]+)/i);
+  if (e) return { recipient: e[1], amount: parseFloat(e[2]), isAgentPayment: true };
 
   return null;
 }
@@ -875,6 +885,546 @@ app.get("/api/agents/:username", async (req, res) => {
   }
 });
 
+// ===== AGENT REPUTATION SYSTEM =====
+
+/**
+ * Compute trust tier from cumulative score.
+ */
+function computeTrustTier(score) {
+  if (score >= 500) return "LEGENDARY";
+  if (score >= 250) return "ELITE";
+  if (score >= 100) return "TRUSTED";
+  if (score >= 30) return "CONTRIBUTOR";
+  return "NEWCOMER";
+}
+
+/**
+ * GET /api/reputation/leaderboard - Top agents by cumulative reputation score.
+ * NOTE: Must be defined BEFORE :username route to avoid matching "leaderboard" as a username.
+ */
+app.get("/api/reputation/leaderboard", async (req, res) => {
+  try {
+    const agentsSnapshot = await discoveredAgentsCollection.limit(50).get();
+    const agents = [];
+
+    for (const agentDoc of agentsSnapshot.docs) {
+      const data = agentDoc.data();
+      const handle = data.username?.toLowerCase() || agentDoc.id;
+
+      let totalEarned = 0;
+      try {
+        const claimedQuery = await paymentsCollection
+          .where("recipient_username", "==", handle)
+          .where("status", "==", "completed")
+          .limit(100)
+          .get();
+        claimedQuery.forEach(d => { totalEarned += d.data().amount || 0; });
+      } catch (e) { /* ignore query errors */ }
+
+      let stakedAmount = 0;
+      try {
+        const stakeDoc = await stakesCollection.doc(handle).get();
+        if (stakeDoc.exists) stakedAmount = stakeDoc.data().staked_amount || 0;
+      } catch (e) { /* ignore */ }
+
+      const baseScore = data.score || 0;
+      const cumulativeScore = Math.floor(baseScore + (totalEarned * 2) + (stakedAmount * 0.5));
+
+      agents.push({
+        username: handle,
+        cumulative_score: cumulativeScore,
+        trust_tier: computeTrustTier(cumulativeScore),
+        base_score: baseScore,
+        total_earned: totalEarned,
+        staked_amount: stakedAmount,
+        verdict: data.verdict || null,
+        times_evaluated: data.times_evaluated || 1
+      });
+    }
+
+    agents.sort((a, b) => b.cumulative_score - a.cumulative_score);
+    res.json({ success: true, agents: agents.slice(0, 30) });
+  } catch (e) {
+    console.error("/api/reputation/leaderboard error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+/**
+ * GET /api/reputation/:username - Get agent reputation with cumulative scores.
+ */
+app.get("/api/reputation/:username", async (req, res) => {
+  try {
+    const handle = normalizeHandle(req.params.username);
+    const agentDoc = await discoveredAgentsCollection.doc(handle).get();
+
+    // Get payment history for this agent
+    const claimedQuery = await paymentsCollection
+      .where("recipient_username", "==", handle)
+      .where("status", "==", "completed")
+      .get();
+
+    let totalEarned = 0;
+    claimedQuery.forEach(doc => { totalEarned += doc.data().amount || 0; });
+
+    // Get bounties completed
+    const bountiesQuery = await bountiesCollection
+      .where("fulfilled_by", "==", handle)
+      .where("status", "==", "completed")
+      .get();
+
+    // Get staking info
+    const stakeDoc = await stakesCollection.doc(handle).get();
+    const stakedAmount = stakeDoc.exists ? stakeDoc.data().staked_amount || 0 : 0;
+
+    if (!agentDoc.exists) {
+      // Agent not yet discovered, return basic reputation
+      const cumulativeScore = Math.floor(totalEarned * 2);
+      return res.json({
+        success: true,
+        reputation: {
+          username: handle,
+          cumulative_score: cumulativeScore,
+          trust_tier: computeTrustTier(cumulativeScore),
+          total_earned: totalEarned,
+          times_evaluated: 0,
+          bounties_completed: bountiesQuery.size,
+          staked_amount: stakedAmount,
+          is_discovered: false
+        }
+      });
+    }
+
+    const agentData = agentDoc.data();
+    const timesEvaluated = agentData.times_evaluated || 1;
+    const baseScore = agentData.score || 0;
+
+    // Cumulative score = base evaluation score + earned rewards weight + bounties + staking bonus
+    const cumulativeScore = Math.floor(
+      baseScore +
+      (totalEarned * 2) +
+      (bountiesQuery.size * 15) +
+      (stakedAmount * 0.5)
+    );
+
+    const reputation = {
+      username: handle,
+      cumulative_score: cumulativeScore,
+      trust_tier: computeTrustTier(cumulativeScore),
+      base_score: baseScore,
+      total_earned: totalEarned,
+      times_evaluated: timesEvaluated,
+      bounties_completed: bountiesQuery.size,
+      staked_amount: stakedAmount,
+      last_evaluated: agentData.last_evaluated_at || null,
+      verdict: agentData.verdict || null,
+      contributions: agentData.contributions || [],
+      is_discovered: true
+    };
+
+    res.json({ success: true, reputation });
+  } catch (e) {
+    console.error("/api/reputation/:username error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// ===== BOUNTY BOARD =====
+
+/**
+ * POST /api/bounties - Create a new bounty.
+ */
+app.post("/api/bounties", async (req, res) => {
+  try {
+    const { title, description, reward, tags, creator } = req.body;
+    if (!title || !reward || !creator) {
+      return res.status(400).json({ success: false, message: "title, reward, and creator required" });
+    }
+
+    const bountyId = `bounty_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const bounty = {
+      id: bountyId,
+      title,
+      description: description || '',
+      reward: Number(reward),
+      tags: tags || [],
+      creator: normalizeHandle(creator),
+      status: 'open',
+      submissions: [],
+      fulfilled_by: null,
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await bountiesCollection.doc(bountyId).set(bounty);
+    console.log(`📋 Bounty created: "${title}" - $${reward} USDC by @${creator}`);
+
+    // Log agent action
+    await agentLogsCollection.add({
+      type: 'BOUNTY',
+      msg: `New bounty posted: "${title}" - $${reward} USDC reward`,
+      skill_id: 'bounty_board',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ success: true, bounty: { ...bounty, id: bountyId } });
+  } catch (e) {
+    console.error("/api/bounties error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+/**
+ * GET /api/bounties - List bounties with optional status filter.
+ */
+app.get("/api/bounties", async (req, res) => {
+  try {
+    const status = req.query.status;
+    let snapshot;
+
+    try {
+      if (status) {
+        snapshot = await bountiesCollection
+          .where("status", "==", status)
+          .orderBy("created_at", "desc")
+          .limit(50)
+          .get();
+      } else {
+        snapshot = await bountiesCollection
+          .orderBy("created_at", "desc")
+          .limit(50)
+          .get();
+      }
+    } catch (indexErr) {
+      // Fallback without ordering if index doesn't exist
+      snapshot = await bountiesCollection.limit(50).get();
+    }
+
+    const bounties = [];
+    snapshot.forEach(doc => {
+      const data = { id: doc.id, ...doc.data() };
+      if (!status || data.status === status) {
+        bounties.push(data);
+      }
+    });
+
+    res.json({ success: true, bounties });
+  } catch (e) {
+    console.error("/api/bounties error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+/**
+ * POST /api/bounties/:id/submit - Submit work for a bounty.
+ */
+app.post("/api/bounties/:id/submit", async (req, res) => {
+  try {
+    const bountyId = req.params.id;
+    const { username, proof } = req.body;
+
+    if (!username || !proof) {
+      return res.status(400).json({ success: false, message: "username and proof required" });
+    }
+
+    const handle = normalizeHandle(username);
+    const bountyDoc = await bountiesCollection.doc(bountyId).get();
+
+    if (!bountyDoc.exists) {
+      return res.status(404).json({ success: false, message: "Bounty not found" });
+    }
+
+    const bounty = bountyDoc.data();
+    if (bounty.status !== 'open' && bounty.status !== 'in_progress') {
+      return res.status(400).json({ success: false, message: "Bounty is not accepting submissions" });
+    }
+
+    // Check for duplicate submissions from same user
+    const existingSubmissions = bounty.submissions || [];
+    if (existingSubmissions.some(s => s.username === handle)) {
+      return res.status(400).json({ success: false, message: "You already submitted work for this bounty" });
+    }
+
+    const submission = {
+      username: handle,
+      proof,
+      submitted_at: new Date().toISOString(),
+      status: 'pending_review'
+    };
+
+    await bountiesCollection.doc(bountyId).update({
+      submissions: [...existingSubmissions, submission],
+      status: 'in_progress',
+      updated_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`📋 Bounty submission: @${handle} submitted work for "${bounty.title}"`);
+
+    // Log agent action
+    await agentLogsCollection.add({
+      type: 'BOUNTY',
+      msg: `@${handle} submitted work for bounty "${bounty.title}"`,
+      skill_id: 'bounty_board',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ success: true, message: "Submission recorded" });
+  } catch (e) {
+    console.error("/api/bounties/:id/submit error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+/**
+ * POST /api/bounties/:id/evaluate - Evaluate a bounty submission (admin/THE_CLAW).
+ * Approves submission, creates reward payment, and marks bounty completed.
+ */
+app.post("/api/bounties/:id/evaluate", async (req, res) => {
+  try {
+    const bountyId = req.params.id;
+    const { winner_username, approved } = req.body;
+
+    if (!winner_username) {
+      return res.status(400).json({ success: false, message: "winner_username required" });
+    }
+
+    const handle = normalizeHandle(winner_username);
+    const bountyDoc = await bountiesCollection.doc(bountyId).get();
+
+    if (!bountyDoc.exists) {
+      return res.status(404).json({ success: false, message: "Bounty not found" });
+    }
+
+    const bounty = bountyDoc.data();
+
+    if (approved === false) {
+      // Reject - mark submission as rejected
+      const submissions = (bounty.submissions || []).map(s =>
+        s.username === handle ? { ...s, status: 'rejected' } : s
+      );
+      await bountiesCollection.doc(bountyId).update({ submissions, updated_at: admin.firestore.FieldValue.serverTimestamp() });
+      return res.json({ success: true, message: "Submission rejected" });
+    }
+
+    // Approve - create reward payment and mark bounty completed
+    const paymentId = `bounty_${bountyId}_${handle}_${Date.now()}`;
+
+    await paymentsCollection.doc(paymentId).set({
+      tweet_id: paymentId,
+      sender: 'THE_CLAW',
+      sender_username: 'clawpay_agent',
+      recipient: handle,
+      recipient_username: handle,
+      amount: bounty.reward,
+      status: 'pending',
+      claimed_by: null,
+      reason: `Bounty completed: ${bounty.title}`,
+      skill_id: 'bounty_board',
+      created_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Update bounty status
+    const submissions = (bounty.submissions || []).map(s =>
+      s.username === handle ? { ...s, status: 'approved' } : s
+    );
+
+    await bountiesCollection.doc(bountyId).update({
+      status: 'completed',
+      fulfilled_by: handle,
+      submissions,
+      completed_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Update agent reputation
+    const agentDoc = await discoveredAgentsCollection.doc(handle).get();
+    if (agentDoc.exists) {
+      const currentScore = agentDoc.data().score || 0;
+      await discoveredAgentsCollection.doc(handle).update({
+        score: currentScore + 15,
+        times_evaluated: admin.firestore.FieldValue.increment(1),
+        updated_at: new Date()
+      });
+    }
+
+    console.log(`✅ Bounty "${bounty.title}" completed by @${handle} - $${bounty.reward} reward created`);
+
+    await agentLogsCollection.add({
+      type: 'BOUNTY',
+      msg: `Bounty "${bounty.title}" fulfilled by @${handle}. $${bounty.reward} USDC reward created.`,
+      skill_id: 'bounty_board',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ success: true, message: "Bounty approved and reward created", payment_id: paymentId });
+  } catch (e) {
+    console.error("/api/bounties/:id/evaluate error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// ===== AGENT STAKING =====
+
+/**
+ * POST /api/stake - Stake USDC into the treasury for reward multipliers.
+ * Records stake amount (actual USDC transfer handled by vault delegation).
+ */
+app.post("/api/stake", async (req, res) => {
+  try {
+    const { username, wallet, amount } = req.body;
+    if (!username || !wallet || !amount) {
+      return res.status(400).json({ success: false, message: "username, wallet, and amount required" });
+    }
+
+    const handle = normalizeHandle(username);
+    const stakeAmount = Number(amount);
+    if (stakeAmount <= 0) {
+      return res.status(400).json({ success: false, message: "Stake amount must be positive" });
+    }
+
+    // Get current stake
+    const stakeDoc = await stakesCollection.doc(handle).get();
+    const currentStake = stakeDoc.exists ? stakeDoc.data().staked_amount || 0 : 0;
+    const newTotal = currentStake + stakeAmount;
+
+    // Compute tier
+    let tier = 'OBSERVER';
+    if (newTotal >= 200) tier = 'ARCHITECT';
+    else if (newTotal >= 50) tier = 'SENTINEL';
+    else if (newTotal >= 10) tier = 'OPERATOR';
+
+    let multiplier = 1.0;
+    if (tier === 'ARCHITECT') multiplier = 2.0;
+    else if (tier === 'SENTINEL') multiplier = 1.5;
+    else if (tier === 'OPERATOR') multiplier = 1.25;
+
+    await stakesCollection.doc(handle).set({
+      username: handle,
+      wallet,
+      staked_amount: newTotal,
+      tier,
+      multiplier,
+      last_staked_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`💎 @${handle} staked $${stakeAmount} USDC (total: $${newTotal}, tier: ${tier})`);
+
+    await agentLogsCollection.add({
+      type: 'STAKE',
+      msg: `@${handle} staked $${stakeAmount} USDC into treasury. Tier: ${tier} (${multiplier}x multiplier)`,
+      skill_id: 'staking',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({
+      success: true,
+      staked_amount: newTotal,
+      tier,
+      multiplier
+    });
+  } catch (e) {
+    console.error("/api/stake error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+/**
+ * POST /api/unstake - Withdraw staked USDC from treasury.
+ */
+app.post("/api/unstake", async (req, res) => {
+  try {
+    const { username, wallet } = req.body;
+    if (!username || !wallet) {
+      return res.status(400).json({ success: false, message: "username and wallet required" });
+    }
+
+    const handle = normalizeHandle(username);
+    const stakeDoc = await stakesCollection.doc(handle).get();
+
+    if (!stakeDoc.exists || !stakeDoc.data().staked_amount) {
+      return res.status(400).json({ success: false, message: "No active stake found" });
+    }
+
+    const previousAmount = stakeDoc.data().staked_amount;
+
+    await stakesCollection.doc(handle).update({
+      staked_amount: 0,
+      tier: 'OBSERVER',
+      multiplier: 1.0,
+      unstaked_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`💎 @${handle} unstaked $${previousAmount} USDC from treasury`);
+
+    await agentLogsCollection.add({
+      type: 'STAKE',
+      msg: `@${handle} unstaked $${previousAmount} USDC from treasury`,
+      skill_id: 'staking',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ success: true, unstaked_amount: previousAmount });
+  } catch (e) {
+    console.error("/api/unstake error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+/**
+ * GET /api/stakes/:username - Get staking info for an agent.
+ */
+app.get("/api/stakes/:username", async (req, res) => {
+  try {
+    const handle = normalizeHandle(req.params.username);
+    const stakeDoc = await stakesCollection.doc(handle).get();
+
+    if (!stakeDoc.exists) {
+      return res.json({
+        success: true,
+        stake: { username: handle, staked_amount: 0, tier: 'OBSERVER', multiplier: 1.0 }
+      });
+    }
+
+    res.json({ success: true, stake: stakeDoc.data() });
+  } catch (e) {
+    console.error("/api/stakes/:username error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+/**
+ * GET /api/staking/stats - Global staking statistics.
+ */
+app.get("/api/staking/stats", async (req, res) => {
+  try {
+    const snapshot = await stakesCollection.limit(200).get();
+
+    let totalStaked = 0;
+    let totalStakers = 0;
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.staked_amount > 0) {
+        totalStaked += data.staked_amount;
+        totalStakers++;
+      }
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        total_staked: totalStaked,
+        total_stakers: totalStakers
+      }
+    });
+  } catch (e) {
+    console.error("/api/staking/stats error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 // ===== LEADERBOARD =====
 
 app.get("/api/leaderboard", async (req, res) => {
@@ -1428,6 +1978,14 @@ async function runScheduledTweetCheck() {
       if (parsed && parsed.recipient && Number.isFinite(parsed.amount)) {
         const sender = users[tweet.author_id] || tweet.author_id || "unknown";
         await recordPayment(sender, parsed.recipient, parsed.amount, tweet.id);
+
+        // If agent-to-agent payment with reason, store the reason
+        if (parsed.isAgentPayment && parsed.reason) {
+          await paymentsCollection.doc(tweet.id).update({
+            reason: parsed.reason,
+            is_agent_payment: true
+          }).catch(() => {});
+        }
       }
 
       if (!newestId || BigInt(tweet.id) > BigInt(newestId)) {

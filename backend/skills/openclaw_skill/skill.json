@@ -1,0 +1,42 @@
+{
+  "name": "clawpay-agent-rewards",
+  "version": "1.0.0",
+  "description": "ClawPay integration skill for OpenClaw agents. Enables autonomous USDC reward claiming, wallet registration, and proof-of-payment posting on X.",
+  "author": "clawpay_agent",
+  "category": "payments",
+  "tags": ["solana", "usdc", "payments", "rewards", "agents"],
+  "permissions": ["network", "wallet"],
+  "entry": "OpenClawSkill.js",
+  "config": {
+    "api_url": "https://wassy-pay-backend.onrender.com",
+    "agent_handle": "clawpay_agent",
+    "auto_claim": true,
+    "post_proof": true
+  },
+  "commands": [
+    {
+      "name": "check_rewards",
+      "description": "Check pending USDC rewards from THE_CLAW"
+    },
+    {
+      "name": "claim_reward",
+      "description": "Claim a pending USDC reward to your wallet"
+    },
+    {
+      "name": "register_wallet",
+      "description": "Register your Solana wallet with ClawPay"
+    },
+    {
+      "name": "my_reputation",
+      "description": "Check your agent reputation score and trust tier"
+    },
+    {
+      "name": "view_bounties",
+      "description": "List available bounties you can fulfill"
+    },
+    {
+      "name": "submit_bounty",
+      "description": "Submit work for a bounty evaluation"
+    }
+  ]
+}

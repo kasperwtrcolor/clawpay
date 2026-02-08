@@ -96,7 +96,10 @@ export const AgentScout = {
 
         console.log(`📊 @${account.username}: score=${evaluation.score}, verdict=${evaluation.verdict}, reward=$${evaluation.reward_amount}`);
 
-        // Step 5: Store evaluation in agent registry
+        // Step 5: Store evaluation in agent registry (with cumulative tracking)
+        const existingAgent = agentDoc.exists ? agentDoc.data() : {};
+        const timesEvaluated = (existingAgent.times_evaluated || 0) + 1;
+
         await agentsCollection.doc(account.username.toLowerCase()).set({
           username: account.username,
           x_user_id: account.id,
@@ -111,6 +114,7 @@ export const AgentScout = {
           last_evaluated_at: new Date(),
           profile_image: account.profile_image_url || null,
           tweet_count: tweets.length,
+          times_evaluated: timesEvaluated,
           updated_at: new Date()
         }, { merge: true });
 
@@ -118,27 +122,39 @@ export const AgentScout = {
         if (evaluation.score >= this.config.min_score && evaluation.reward_amount > 0) {
           const tweetId = `scout_${account.username}_${Date.now()}`;
 
+          // Check for staking multiplier
+          let multiplier = 1.0;
+          try {
+            const stakeDoc = await firestore.collection('agent_stakes').doc(account.username.toLowerCase()).get();
+            if (stakeDoc.exists) {
+              multiplier = stakeDoc.data().multiplier || 1.0;
+            }
+          } catch (e) { /* no stake = 1x */ }
+
+          const finalReward = Math.round(evaluation.reward_amount * multiplier * 100) / 100;
+
           const reward = {
             tweet_id: tweetId,
             sender: 'THE_CLAW',
             sender_username: 'clawpay_agent',
             recipient: account.username.toLowerCase(),
             recipient_username: account.username.toLowerCase(),
-            amount: evaluation.reward_amount,
+            amount: finalReward,
             status: 'pending',
             claimed_by: null,
             reason: evaluation.reason,
             skill_id: this.id,
             evaluation_score: evaluation.score,
             evaluation_verdict: evaluation.verdict,
-            reply_text: this.generateReplyText(account.username, evaluation),
+            staking_multiplier: multiplier,
+            reply_text: this.generateReplyText(account.username, { ...evaluation, reward_amount: finalReward }),
             created_at: new Date()
           };
 
           actions.push(reward);
           rewarded++;
 
-          console.log(`✨ AGENT_SCOUT: Rewarding @${account.username} $${evaluation.reward_amount} USDC (score: ${evaluation.score})`);
+          console.log(`✨ AGENT_SCOUT: Rewarding @${account.username} $${finalReward} USDC (score: ${evaluation.score}, ${multiplier}x multiplier)`);
         }
       }
     } catch (e) {

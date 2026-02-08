@@ -16,6 +16,27 @@ const SKILLS = [
         status: 'ACTIVE'
     },
     {
+        id: 'bounty_board',
+        name: 'BOUNTY_BOARD',
+        desc: 'Post and fulfill bounties. THE_CLAW evaluates and releases USDC rewards.',
+        icon: '📋',
+        status: 'ACTIVE'
+    },
+    {
+        id: 'reputation',
+        name: 'REPUTATION',
+        desc: 'Cumulative trust scores and tier rankings for discovered agents.',
+        icon: '🏅',
+        status: 'ACTIVE'
+    },
+    {
+        id: 'staking',
+        name: 'AGENT_STAKING',
+        desc: 'Stake USDC into treasury for higher reward multipliers and priority.',
+        icon: '💎',
+        status: 'ACTIVE'
+    },
+    {
         id: 'social_pulse',
         name: 'SOCIAL_PULSE',
         desc: 'Scans X for high-sentiment interactions and triggers rewards.',
@@ -30,18 +51,18 @@ const SKILLS = [
         status: 'ACTIVE'
     },
     {
-        id: 'intent_parser',
-        name: 'INTENT_PARSER',
-        desc: 'NLP layer for parsing complex social settlement commands.',
-        icon: '🗣️',
+        id: 'openclaw_skill',
+        name: 'OPENCLAW_SKILL',
+        desc: 'ClawHub-compatible skill package for OpenClaw agent integration.',
+        icon: '🔌',
         status: 'ACTIVE'
     },
     {
-        id: 'liquidity_claw',
-        name: 'LIQUIDITY_CLAW',
-        desc: 'Autonomously manages treasury distribution based on volume spikes.',
-        icon: '🦀',
-        status: 'STANDBY'
+        id: 'agent_payments',
+        name: 'AGENT_PAYMENTS',
+        desc: 'Agent-to-agent USDC payments via X commands: fund, tip, send.',
+        icon: '🤝',
+        status: 'ACTIVE'
     }
 ];
 
@@ -49,7 +70,7 @@ export function ClawSkills() {
     return (
         <div className="glass-panel" style={{ marginBottom: '30px' }}>
             <div className="label-subtle" style={{ background: 'var(--accent-secondary)', color: '#000' }}>// ACTIVE_CLAW_SKILLS</div>
-            <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+            <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
                 {SKILLS.map(skill => (
                     <div key={skill.id} className="inset-panel" style={{
                         opacity: skill.status === 'ACTIVE' ? 1 : 0.5,

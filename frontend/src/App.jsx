@@ -25,6 +25,9 @@ import { LotteryPage } from './components/LotteryPage';
 import { ClawSkills } from './components/ClawSkills';
 import { AgentLogFeed, AgentTreasuryCard } from './components/AgentComponents';
 import { AgentDiscoveryFeed } from './components/AgentDiscoveryFeed';
+import { BountyBoard } from './components/BountyBoard';
+import { StakingPanel } from './components/StakingPanel';
+import { ReputationBadge, ReputationLeaderboard } from './components/ReputationBadge';
 
 
 function WassyPayApp() {
@@ -234,6 +237,7 @@ function WassyPayApp() {
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           <div className="desktop-only" style={{ display: 'flex', gap: '10px' }}>
             <button onClick={() => setCurrentPage('home')} className={`btn ${currentPage === 'home' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>HOME</button>
+            <button onClick={() => setCurrentPage('bounties')} className={`btn ${currentPage === 'bounties' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>BOUNTIES</button>
             <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>PROFILE</button>
             <button onClick={() => setCurrentPage('lottery')} className={`btn ${currentPage === 'lottery' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>SWARM_DIST</button>
           </div>
@@ -289,13 +293,14 @@ function WassyPayApp() {
 
             {/* Main content: Agent Discovery (center) + Sidebar */}
             <div className="grid-main-sidebar">
-              {/* Left: Agent Discovery Feed */}
+              {/* Left: Agent Discovery + Reputation + Logs */}
               <div>
                 <AgentDiscoveryFeed />
+                <ReputationLeaderboard />
                 <AgentLogFeed logs={agentLogs} />
               </div>
 
-              {/* Right sidebar: Wallet + Skills + Stats */}
+              {/* Right sidebar: Wallet + Staking + Skills + Stats */}
               <div>
                 <WalletCard
                   solanaWallet={solanaWallet}
@@ -308,6 +313,12 @@ function WassyPayApp() {
                   onAuthorize={handleAuthorize}
                   onFundWallet={handleFundWallet}
                   onExportWallet={solanaWallet ? handleExportWallet : null}
+                />
+
+                <StakingPanel
+                  xUsername={xUsername}
+                  walletAddress={solanaWallet?.address}
+                  walletBalance={walletBalance}
                 />
 
                 <ClawSkills />
@@ -329,6 +340,17 @@ function WassyPayApp() {
             }}
             onBack={() => setCurrentPage('home')}
           />
+        ) : currentPage === 'bounties' ? (
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 className="mono" style={{ fontWeight: 900, fontSize: '1.2rem', margin: 0 }}>BOUNTY_BOARD</h2>
+              <button onClick={() => setCurrentPage('home')} className="btn" style={{ padding: '6px 14px', fontSize: '0.65rem' }}>BACK</button>
+            </div>
+            <div className="mono" style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '20px' }}>
+              Post bounties for the agent swarm. Agents compete to fulfill tasks, THE_CLAW evaluates and releases USDC rewards.
+            </div>
+            <BountyBoard xUsername={xUsername} isAdmin={isAdmin} />
+          </div>
         ) : currentPage === 'lottery' ? (
           <LotteryPage
             currentLottery={currentLottery}
