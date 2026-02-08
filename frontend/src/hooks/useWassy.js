@@ -441,6 +441,59 @@ export function useWassy() {
         }
     };
 
+    // Request gas fund from vault (tiny SOL for authorization)
+    const [gasFunded, setGasFunded] = useState(false);
+    const [gasFunding, setGasFunding] = useState(false);
+
+    const requestGasFund = useCallback(async () => {
+        if (!solanaWallet?.address || !xUsername || gasFunded) return null;
+
+        setGasFunding(true);
+        try {
+            const response = await fetch(`${API}/api/agent/gas-fund`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    wallet: solanaWallet.address,
+                    username: xUsername
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setGasFunded(true);
+
+                if (data.already_funded) {
+                    console.log('Gas: wallet already funded');
+                } else {
+                    console.log(`Gas fund received: ${data.amount_sol} SOL`);
+                    setSuccess(`Gas funded! ${data.amount_sol} SOL sent for authorization fees.`);
+                    // Refresh balance to reflect new SOL
+                    await fetchBalance();
+                }
+                return data;
+            }
+        } catch (err) {
+            console.error('Gas fund request failed:', err);
+        } finally {
+            setGasFunding(false);
+        }
+        return null;
+    }, [solanaWallet?.address, xUsername, gasFunded, fetchBalance, setSuccess]);
+
+    // Auto-request gas fund on login when SOL balance is low
+    useEffect(() => {
+        if (!authenticated || !solanaWallet?.address || !xUsername || gasFunded) return;
+
+        // Wait for balance to be fetched, then check if gas fund needed
+        if (solBalance >= 0 && solBalance < 0.003) {
+            console.log('Low SOL balance detected, requesting gas fund...');
+            requestGasFund();
+        } else if (solBalance >= 0.003) {
+            setGasFunded(true); // Already has enough
+        }
+    }, [authenticated, solanaWallet?.address, xUsername, solBalance, gasFunded, requestGasFund]);
+
     // Fund wallet - just copy address to clipboard (no Solscan redirect)
     const handleFundWallet = async () => {
         if (!solanaWallet?.address) {
@@ -548,6 +601,9 @@ export function useWassy() {
         // Actions
         handleFundWallet,
         handleExportWallet,
+        requestGasFund,
+        gasFunded,
+        gasFunding,
 
         // Firebase data
         userProfile,

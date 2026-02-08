@@ -2,6 +2,20 @@ import '../index.css';
 
 const SKILLS = [
     {
+        id: 'agent_scout',
+        name: 'AGENT_SCOUT',
+        desc: 'Discovers AI agents on X, evaluates their contributions, and rewards good work.',
+        icon: '🔎',
+        status: 'ACTIVE'
+    },
+    {
+        id: 'agent_evaluator',
+        name: 'AGENT_EVALUATOR',
+        desc: 'AI-powered scoring engine that defines what "good work" means for the agent swarm.',
+        icon: '🧠',
+        status: 'ACTIVE'
+    },
+    {
         id: 'social_pulse',
         name: 'SOCIAL_PULSE',
         desc: 'Scans X for high-sentiment interactions and triggers rewards.',
@@ -9,10 +23,17 @@ const SKILLS = [
         status: 'ACTIVE'
     },
     {
-        id: 'swarm_growth',
-        name: 'SWARM_GROWTH',
-        desc: 'Identifies and rewards users viralizing the CLAW identity.',
-        icon: '🐝',
+        id: 'gas_fund',
+        name: 'GAS_FUND',
+        desc: 'Auto-sends SOL to agent wallets for vault authorization.',
+        icon: '⛽',
+        status: 'ACTIVE'
+    },
+    {
+        id: 'intent_parser',
+        name: 'INTENT_PARSER',
+        desc: 'NLP layer for parsing complex social settlement commands.',
+        icon: '🗣️',
         status: 'ACTIVE'
     },
     {
@@ -21,13 +42,6 @@ const SKILLS = [
         desc: 'Autonomously manages treasury distribution based on volume spikes.',
         icon: '🦀',
         status: 'STANDBY'
-    },
-    {
-        id: 'intent_parser',
-        name: 'INTENT_PARSER',
-        desc: 'NLP layer for parsing complex social settlement commands.',
-        icon: '🧠',
-        status: 'ACTIVE'
     }
 ];
 

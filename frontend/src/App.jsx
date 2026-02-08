@@ -24,8 +24,7 @@ import { LotteryModal } from './components/LotteryModal';
 import { LotteryPage } from './components/LotteryPage';
 import { ClawSkills } from './components/ClawSkills';
 import { AgentLogFeed, AgentTreasuryCard } from './components/AgentComponents';
-
-// Note: ACHIEVEMENTS is now provided by useWassy hook from useFirestore.js
+import { AgentDiscoveryFeed } from './components/AgentDiscoveryFeed';
 
 
 function WassyPayApp() {
@@ -54,6 +53,9 @@ function WassyPayApp() {
     allUsers,
     handleFundWallet,
     handleExportWallet,
+    requestGasFund,
+    gasFunded,
+    gasFunding,
     loading,
     error,
     success,
@@ -245,24 +247,56 @@ function WassyPayApp() {
 
       <main className="container" style={{ padding: '40px 20px' }}>
         {currentPage === 'home' ? (
-          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-            <div className="grid-2">
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            {/* Gas Fund Banner - shows when wallet needs gas */}
+            {!gasFunded && solBalance < 0.003 && solanaWallet && (
+              <div className="glass-panel" style={{
+                marginBottom: '20px', padding: '16px 24px',
+                background: 'rgba(49, 215, 255, 0.05)',
+                border: '1px solid var(--accent)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                flexWrap: 'wrap', gap: '10px'
+              }}>
+                <div>
+                  <div className="mono" style={{ fontWeight: 900, fontSize: '0.8rem' }}>GAS_FUND_AVAILABLE</div>
+                  <div className="mono" style={{ fontSize: '0.65rem', opacity: 0.7, marginTop: '4px' }}>
+                    The Claw will send you SOL for authorization fees. No need to fund yourself.
+                  </div>
+                </div>
+                <button
+                  onClick={requestGasFund}
+                  disabled={gasFunding}
+                  className="btn btn-accent"
+                  style={{ padding: '8px 20px', fontSize: '0.7rem' }}
+                >
+                  {gasFunding ? 'SENDING...' : 'REQUEST_GAS'}
+                </button>
+              </div>
+            )}
+
+            {/* Top row: Treasury + Claims side by side */}
+            <div className="grid-2" style={{ marginBottom: '0' }}>
+              <AgentTreasuryCard treasuryBalance={agentTreasury} />
+
+              <div className="glass-panel" style={{ marginBottom: '30px' }}>
+                <div className="label-subtle" style={{ background: 'var(--success)', color: '#000' }}>// CLAIM_VAULT</div>
+                <div className="mono" style={{ fontSize: '0.8rem', marginTop: '10px', marginBottom: '15px', opacity: 0.7 }}>
+                  PENDING_REWARDS_FROM_THE_CLAW
+                </div>
+                <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
+              </div>
+            </div>
+
+            {/* Main content: Agent Discovery (center) + Sidebar */}
+            <div className="grid-main-sidebar">
+              {/* Left: Agent Discovery Feed */}
               <div>
-                <AgentTreasuryCard treasuryBalance={agentTreasury} />
+                <AgentDiscoveryFeed />
                 <AgentLogFeed logs={agentLogs} />
-                <ClawSkills />
               </div>
 
+              {/* Right sidebar: Wallet + Skills + Stats */}
               <div>
-                <div className="glass-panel" style={{ marginBottom: '30px' }}>
-                  <div className="label-subtle" style={{ background: 'var(--success)', color: '#000' }}>// CLAIM_VAULT</div>
-                  <span className="mono" style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>SWARM_DISTRIBUTION</span>
-                  <div className="mono" style={{ fontSize: '0.8rem', marginTop: '10px', marginBottom: '20px', opacity: 0.7 }}>
-                    AGENT_ATTRIBUTED_REWARDS_PENDING_SETTLEMENT.
-                  </div>
-                  <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
-                </div>
-
                 <WalletCard
                   solanaWallet={solanaWallet}
                   walletBalance={walletBalance}
@@ -275,6 +309,8 @@ function WassyPayApp() {
                   onFundWallet={handleFundWallet}
                   onExportWallet={solanaWallet ? handleExportWallet : null}
                 />
+
+                <ClawSkills />
 
                 <StatsCard userStats={userStats} />
               </div>

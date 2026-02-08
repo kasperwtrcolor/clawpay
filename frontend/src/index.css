@@ -179,11 +179,19 @@ h4 {
   box-shadow: 4px 4px 0px var(--accent-secondary);
 }
 
+/* Agent discovery layout */
+.grid-main-sidebar {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 30px;
+}
+
 /* Mobile Adjustments */
 @media (max-width: 768px) {
 
   .grid-2,
-  .stats-grid {
+  .stats-grid,
+  .grid-main-sidebar {
     grid-template-columns: 1fr;
   }
 }

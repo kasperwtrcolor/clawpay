@@ -2,14 +2,19 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
-import { Connection, PublicKey, Keypair, Transaction, ComputeBudgetProgram } from "@solana/web3.js";
+import { Connection, PublicKey, Keypair, Transaction, ComputeBudgetProgram, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getAssociatedTokenAddress, getAccount, createTransferInstruction, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import bs58 from "bs58";
 import admin from "firebase-admin";
 import { TwitterApi } from "twitter-api-v2";
 import { SocialPulse } from "./skills/social_pulse/SocialPulse.js";
+import { AgentScout } from "./skills/agent_scout/AgentScout.js";
 
 dotenv.config();
+
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
+const GAS_FUND_AMOUNT_SOL = 0.003; // Tiny SOL amount for agent gas fees
+const GAS_FUND_LAMPORTS = Math.floor(GAS_FUND_AMOUNT_SOL * LAMPORTS_PER_SOL);
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -89,6 +94,8 @@ const usersCollection = firestore.collection("backend_users");
 const paymentsCollection = firestore.collection("payments");
 const metaCollection = firestore.collection("meta");
 const agentLogsCollection = firestore.collection("agent_logs");
+const discoveredAgentsCollection = firestore.collection("discovered_agents");
+const gasFundedCollection = firestore.collection("gas_funded_wallets");
 
 // Run scan at boot
 setTimeout(() => {
@@ -690,6 +697,184 @@ app.get("/api/check-fund-status", async (req, res) => {
   }
 });
 
+// ===== SOL GAS FUND (auto-fund agent wallets) =====
+
+/**
+ * POST /api/agent/gas-fund
+ * Sends a tiny amount of SOL to an agent's embedded wallet so they can
+ * authorize the vault without needing to fund their wallet first.
+ * Tracks funded wallets to prevent abuse (one-time per wallet).
+ */
+app.post("/api/agent/gas-fund", async (req, res) => {
+  try {
+    const { wallet, username } = req.body;
+    if (!wallet || !username) {
+      return res.status(400).json({ success: false, message: "wallet and username required" });
+    }
+
+    if (!vaultKeypair) {
+      return res.status(500).json({ success: false, message: "Vault not configured" });
+    }
+
+    const handle = normalizeHandle(username);
+
+    // Check if already gas-funded
+    const fundedDoc = await gasFundedCollection.doc(wallet).get();
+    if (fundedDoc.exists) {
+      return res.json({
+        success: true,
+        already_funded: true,
+        message: "Wallet already gas-funded",
+        amount_sol: fundedDoc.data().amount_sol
+      });
+    }
+
+    // Check wallet SOL balance - only fund if below threshold
+    const recipientPubkey = new PublicKey(wallet);
+    const currentBalance = await solanaConnection.getBalance(recipientPubkey);
+    const currentSol = currentBalance / LAMPORTS_PER_SOL;
+
+    if (currentSol >= GAS_FUND_AMOUNT_SOL) {
+      // Already has enough SOL, record it but don't send
+      await gasFundedCollection.doc(wallet).set({
+        wallet,
+        username: handle,
+        amount_sol: 0,
+        reason: "already_sufficient",
+        funded_at: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      return res.json({
+        success: true,
+        already_funded: true,
+        message: `Wallet already has ${currentSol.toFixed(4)} SOL`,
+        amount_sol: 0
+      });
+    }
+
+    // Check vault has enough SOL to fund
+    const vaultBalance = await solanaConnection.getBalance(vaultKeypair.publicKey);
+    if (vaultBalance < GAS_FUND_LAMPORTS + 10000) { // 10000 for tx fee
+      return res.status(400).json({
+        success: false,
+        message: "Vault has insufficient SOL for gas funding"
+      });
+    }
+
+    // Send SOL transfer
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: vaultKeypair.publicKey,
+        toPubkey: recipientPubkey,
+        lamports: GAS_FUND_LAMPORTS
+      })
+    );
+
+    transaction.add(
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50000 })
+    );
+
+    const { blockhash, lastValidBlockHeight } = await solanaConnection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = vaultKeypair.publicKey;
+    transaction.sign(vaultKeypair);
+
+    const signature = await solanaConnection.sendRawTransaction(transaction.serialize(), {
+      skipPreflight: true,
+      maxRetries: 3
+    });
+
+    await solanaConnection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+
+    // Record the gas fund
+    await gasFundedCollection.doc(wallet).set({
+      wallet,
+      username: handle,
+      amount_sol: GAS_FUND_AMOUNT_SOL,
+      tx_signature: signature,
+      funded_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Log the agent action
+    await agentLogsCollection.add({
+      type: 'ACTION',
+      msg: `Gas-funded @${handle}'s wallet with ${GAS_FUND_AMOUNT_SOL} SOL for vault authorization`,
+      skill_id: 'gas_fund',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`⛽ Gas-funded @${handle}: ${GAS_FUND_AMOUNT_SOL} SOL → ${wallet.slice(0, 8)}... (tx: ${signature.slice(0, 16)}...)`);
+
+    res.json({
+      success: true,
+      message: `Sent ${GAS_FUND_AMOUNT_SOL} SOL for gas fees`,
+      amount_sol: GAS_FUND_AMOUNT_SOL,
+      tx_signature: signature
+    });
+  } catch (e) {
+    console.error("/api/agent/gas-fund error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// ===== DISCOVERED AGENTS REGISTRY =====
+
+/**
+ * GET /api/agents - List all discovered AI agents with their evaluation scores.
+ * Used by frontend for the agent discovery feed / leaderboard.
+ */
+app.get("/api/agents", async (req, res) => {
+  try {
+    const verdict = req.query.verdict; // Optional filter: REWARD, WATCH, IGNORE, REJECT
+    let agentsQuery = discoveredAgentsCollection.orderBy("score", "desc").limit(50);
+
+    const snapshot = await agentsQuery.get();
+    let agents = [];
+    snapshot.forEach(doc => {
+      const data = { id: doc.id, ...doc.data() };
+      if (!verdict || data.verdict === verdict.toUpperCase()) {
+        agents.push(data);
+      }
+    });
+
+    res.json({ success: true, agents });
+  } catch (e) {
+    // If index doesn't exist yet, fall back to unordered
+    if (e.message?.includes("requires an index")) {
+      try {
+        const snapshot = await discoveredAgentsCollection.limit(50).get();
+        const agents = [];
+        snapshot.forEach(doc => agents.push({ id: doc.id, ...doc.data() }));
+        agents.sort((a, b) => (b.score || 0) - (a.score || 0));
+        return res.json({ success: true, agents });
+      } catch (fallbackErr) {
+        return res.status(500).json({ success: false, message: fallbackErr.message });
+      }
+    }
+    console.error("/api/agents error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+/**
+ * GET /api/agents/:username - Get a specific agent's evaluation details.
+ */
+app.get("/api/agents/:username", async (req, res) => {
+  try {
+    const handle = normalizeHandle(req.params.username);
+    const doc = await discoveredAgentsCollection.doc(handle).get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, message: "Agent not found" });
+    }
+
+    res.json({ success: true, agent: { id: doc.id, ...doc.data() } });
+  } catch (e) {
+    console.error("/api/agents/:username error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 // ===== LEADERBOARD =====
 
 app.get("/api/leaderboard", async (req, res) => {
@@ -1124,6 +1309,57 @@ app.get("/api/rescan", async (req, res) => {
   res.json({ success: true, message: "Manual rescan triggered" });
 });
 
+// ===== SKILL RESULT PROCESSOR =====
+async function processSkillResults(results, skill) {
+  for (const payment of results) {
+    // Check if already exists
+    const existingDoc = await paymentsCollection.doc(payment.tweet_id).get();
+    if (existingDoc.exists) continue;
+
+    await paymentsCollection.doc(payment.tweet_id).set({
+      ...payment,
+      created_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+    console.log(`✨ Agent attributed reward: @clawpay_agent → @${payment.recipient} $${payment.amount} (${payment.reason || skill.name})`);
+
+    // Autonomous Engagement: Reply to the discovery tweet
+    if (payment.reply_text && !payment.tweet_id.startsWith('scout_') && !payment.tweet_id.startsWith('auto_')) {
+      console.log(`🐦 Attempting autonomous reply to ${payment.tweet_id}...`);
+      const tweetResult = await postTweet(payment.reply_text, payment.tweet_id);
+
+      if (tweetResult) {
+        await agentLogsCollection.add({
+          type: 'SOCIAL',
+          msg: `Replied to @${payment.recipient}: "${payment.reply_text}"`,
+          skill_id: skill.id,
+          tweet_id: tweetResult.id,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    } else if (payment.reply_text) {
+      // For scout/auto discoveries, post as a new tweet (not a reply)
+      const tweetResult = await postTweet(payment.reply_text);
+      if (tweetResult) {
+        await agentLogsCollection.add({
+          type: 'SOCIAL',
+          msg: `Announced reward for @${payment.recipient}: $${payment.amount} USDC`,
+          skill_id: skill.id,
+          tweet_id: tweetResult.id,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    // Record log in Firestore
+    await agentLogsCollection.add({
+      type: 'ACTION',
+      msg: `Attributing $${payment.amount} reward to @${payment.recipient} via ${skill.name}. ${payment.reason || ''}`,
+      skill_id: skill.id,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
 // ===== TWITTER SCANNER =====
 async function runScheduledTweetCheck() {
   if (!X_BEARER_TOKEN) {
@@ -1204,48 +1440,26 @@ async function runScheduledTweetCheck() {
 
     // ===== AGENT SKILLS EXECUTION =====
     console.log("🧠 Executing autonomous agent skills...");
+
+    // Run SocialPulse (legacy skill)
     try {
-      const skills = [SocialPulse];
-      for (const skill of skills) {
-        const results = await skill.run({ firestore });
-        for (const payment of results) {
-          // Check if already exists
-          const existingDoc = await paymentsCollection.doc(payment.tweet_id).get();
-          if (existingDoc.exists) continue;
-
-          await paymentsCollection.doc(payment.tweet_id).set({
-            ...payment,
-            created_at: admin.firestore.FieldValue.serverTimestamp()
-          });
-          console.log(`✨ Agent attributed reward: @clawpay_agent → @${payment.recipient} $${payment.amount} (${payment.reason})`);
-
-          // Autonomous Engagement: Reply to the discovery tweet
-          if (payment.reply_text) {
-            console.log(`🐦 Attempting autonomous reply to ${payment.tweet_id}...`);
-            const tweetResult = await postTweet(payment.reply_text, payment.tweet_id);
-
-            if (tweetResult) {
-              await agentLogsCollection.add({
-                type: 'SOCIAL',
-                msg: `Replied to @${payment.recipient}: "${payment.reply_text}"`,
-                skill_id: skill.id,
-                tweet_id: tweetResult.id,
-                createdAt: admin.firestore.FieldValue.serverTimestamp()
-              });
-            }
-          }
-
-          // Record log in Firestore
-          await agentLogsCollection.add({
-            type: 'ACTION',
-            msg: `Attributing $${payment.amount} reward to @${payment.recipient} via ${skill.name}.`,
-            skill_id: skill.id,
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
-          });
-        }
-      }
+      const socialResults = await SocialPulse.run({ firestore, bearerToken: X_BEARER_TOKEN });
+      await processSkillResults(socialResults, SocialPulse);
     } catch (skillError) {
-      console.error("❌ Agent skills execution error:", skillError.message);
+      console.error("❌ SocialPulse error:", skillError.message);
+    }
+
+    // Run AgentScout (new autonomous discovery)
+    try {
+      console.log("🔎 Running AGENT_SCOUT autonomous discovery...");
+      const scoutResults = await AgentScout.run({
+        firestore,
+        bearerToken: X_BEARER_TOKEN,
+        anthropicKey: ANTHROPIC_API_KEY
+      });
+      await processSkillResults(scoutResults, AgentScout);
+    } catch (skillError) {
+      console.error("❌ AgentScout error:", skillError.message);
     }
   } catch (e) {
     console.error("X scan error:", e.message);
