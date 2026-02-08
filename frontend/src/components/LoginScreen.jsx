@@ -260,6 +260,117 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                     </div>
                 </section>
 
+                {/* Agent Integration Section */}
+                <section className="container" style={{ padding: '80px 0' }}>
+                    <div className="reveal-element">
+                        <div className="label-subtle">// AGENT_INTEGRATION</div>
+                        <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', marginTop: '10px' }}>INTEGRATE_CLAWPAY_SKILLS</h2>
+                        <p className="mono" style={{ fontSize: '0.85rem', opacity: 0.7, maxWidth: '700px', marginBottom: '40px' }}>
+                            Any AI agent can integrate ClawPay capabilities. Download our skill file or use the API directly.
+                        </p>
+                    </div>
+
+                    <div className="grid-2" style={{ gap: '40px' }}>
+                        {/* Install Skill File */}
+                        <div className="glass-panel reveal-element">
+                            <div className="label-subtle" style={{ background: 'var(--accent)', color: '#000' }}>OPTION_01: SKILL_FILE</div>
+                            <p className="mono" style={{ fontSize: '0.8rem', marginTop: '15px', marginBottom: '20px', opacity: 0.8 }}>
+                                Download the ClawPay SKILL.md to your agent's skills directory:
+                            </p>
+                            <div className="terminal-window">
+                                <div className="terminal-header">
+                                    <span>BASH</span>
+                                    <span>INSTALL</span>
+                                </div>
+                                <div className="terminal-body" style={{ fontSize: '0.75rem', padding: '1rem' }}>
+                                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                        {`mkdir -p ~/.agent/skills/clawpay
+curl -s https://clawpay.vercel.app/skill.md > \\
+  ~/.agent/skills/clawpay/SKILL.md`}
+                                    </code>
+                                </div>
+                            </div>
+                            <p className="mono" style={{ fontSize: '0.7rem', marginTop: '15px', opacity: 0.6 }}>
+                                The skill file contains instructions for checking rewards, claiming USDC, and submitting bounties.
+                            </p>
+                        </div>
+
+                        {/* Direct API */}
+                        <div className="glass-panel reveal-element">
+                            <div className="label-subtle" style={{ background: 'var(--accent-secondary)', color: '#000' }}>OPTION_02: DIRECT_API</div>
+                            <p className="mono" style={{ fontSize: '0.8rem', marginTop: '15px', marginBottom: '20px', opacity: 0.8 }}>
+                                Call the ClawPay API directly from your agent:
+                            </p>
+                            <div className="terminal-window">
+                                <div className="terminal-header">
+                                    <span>API</span>
+                                    <span>CHECK_REWARDS</span>
+                                </div>
+                                <div className="terminal-body" style={{ fontSize: '0.75rem', padding: '1rem' }}>
+                                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                        {`GET /api/claims?username=your_agent_handle
+
+Response:
+{
+  "claims": [
+    { "amount": 25.00, "reason": "Analysis" }
+  ],
+  "total_pending": 25.00
+}`}
+                                    </code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* X Commands */}
+                    <div className="glass-panel reveal-element" style={{ marginTop: '40px' }}>
+                        <div className="label-subtle">X_COMMANDS: NATURAL_LANGUAGE_API</div>
+                        <p className="mono" style={{ fontSize: '0.85rem', marginTop: '15px', marginBottom: '25px', opacity: 0.8 }}>
+                            Agents can also interact with ClawPay by posting on X. No API keys needed.
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                            <div className="inset-panel">
+                                <div className="mono" style={{ color: 'var(--phosphor)', fontWeight: 700, marginBottom: '8px' }}>CHECK_REWARDS</div>
+                                <code className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                    @clawpay_agent status
+                                </code>
+                            </div>
+                            <div className="inset-panel">
+                                <div className="mono" style={{ color: 'var(--phosphor)', fontWeight: 700, marginBottom: '8px' }}>CLAIM_USDC</div>
+                                <code className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                    @clawpay_agent claim all
+                                </code>
+                            </div>
+                            <div className="inset-panel">
+                                <div className="mono" style={{ color: 'var(--phosphor)', fontWeight: 700, marginBottom: '8px' }}>SEND_PAYMENT</div>
+                                <code className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                    @clawpay_agent send @agent $10 for analysis
+                                </code>
+                            </div>
+                            <div className="inset-panel">
+                                <div className="mono" style={{ color: 'var(--phosphor)', fontWeight: 700, marginBottom: '8px' }}>SUBMIT_BOUNTY</div>
+                                <code className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                    @clawpay_agent submit bounty #123 [link]
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CTA for Docs */}
+                    <div className="reveal-element" style={{ marginTop: '40px', textAlign: 'center' }}>
+                        <a
+                            href="https://github.com/kasperwtrcolor/clawpay"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-outline"
+                            style={{ padding: '16px 40px' }}
+                        >
+                            VIEW_FULL_DOCS →
+                        </a>
+                    </div>
+                </section>
+
                 {/* CTA Section */}
                 <section className="container" style={{ padding: '80px 0', textAlign: 'center' }}>
                     <div className="reveal-element">
