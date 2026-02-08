@@ -146,8 +146,11 @@ function WassyPayApp() {
   // Handle authorization with loading state
   const handleAuthorize = async (amount) => {
     setIsAuthorizing(true);
-    await authorizeDelegation(amount);
-    setIsAuthorizing(false);
+    try {
+      await authorizeDelegation(amount);
+    } finally {
+      setIsAuthorizing(false);
+    }
   };
 
   // Handle check for payments
@@ -160,15 +163,17 @@ function WassyPayApp() {
   // Handle claim with loading overlay and confetti
   const handleClaim = async (claim) => {
     setIsClaiming(true);
-    const result = await claimPayment(claim);
-    setIsClaiming(false);
-
-    if (result && result.success) {
-      setLastClaimedPayment(claim);
-      setShowShareModal(true);
-      // Trigger confetti!
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000);
+    try {
+      const result = await claimPayment(claim);
+      if (result && result.success) {
+        setLastClaimedPayment(claim);
+        setShowShareModal(true);
+        // Trigger confetti!
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 5000);
+      }
+    } finally {
+      setIsClaiming(false);
     }
   };
 

@@ -428,7 +428,12 @@ app.get("/api/claims", async (req, res) => {
 
     res.json({ success: true, claims: enrichedClaims });
   } catch (e) {
-    console.error("/api/claims error:", e);
+    if (e.message && e.message.includes("requires an index")) {
+      console.error("❌ Firestore Index Required. Create it here:");
+      console.error(e.message.split("here: ")[1] || e.message);
+    } else {
+      console.error("/api/claims error:", e);
+    }
     res.status(500).json({ success: false, message: e.message });
   }
 });
