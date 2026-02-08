@@ -49,22 +49,23 @@ export function MobileNav({
                     <button
                         key={item.id}
                         onClick={() => handleClick(item.id)}
-                        className="btn"
                         style={{
                             flex: 1,
-                            background: isActive ? 'var(--text-primary)' : 'transparent',
-                            color: isActive ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                            background: isActive ? 'var(--phosphor)' : 'transparent',
+                            color: isActive ? 'var(--bg)' : 'var(--phosphor)',
                             padding: '12px 5px',
                             transition: 'all 0.1s ease',
                             border: 'none',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '4px'
+                            gap: '4px',
+                            cursor: 'pointer',
+                            fontFamily: "'Space Mono', monospace"
                         }}
                     >
                         <Icon size={18} strokeWidth={isActive ? 3 : 2} />
-                        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 800 }}>
+                        <span style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase' }}>
                             {item.label}
                         </span>
                     </button>
