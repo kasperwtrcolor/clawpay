@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Home, User, Trophy, Crown, Ticket } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Home, User, Ticket, FileText, Compass, Crown } from 'lucide-react';
 import '../index.css';
 
 const baseNavItems = [
     { id: 'home', icon: Home, label: 'HOME' },
-    { id: 'leaders', icon: Trophy, label: 'LEADS' },
+    { id: 'bounties', icon: FileText, label: 'BOUNTIES' },
+    { id: 'explore', icon: Compass, label: 'EXPLORE' },
     { id: 'lottery', icon: Ticket, label: 'SWARM' },
     { id: 'profile', icon: User, label: 'PROFILE' },
 ];
@@ -18,6 +19,27 @@ export function MobileNav({
 }) {
     const navItems = isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
     const [active, setActive] = useState(activeItem);
+    const [indicatorStyle, setIndicatorStyle] = useState({});
+    const navRef = useRef(null);
+    const itemRefs = useRef({});
+
+    // Sync external active state
+    useEffect(() => {
+        setActive(activeItem);
+    }, [activeItem]);
+
+    // Calculate indicator position
+    useEffect(() => {
+        const activeRef = itemRefs.current[active];
+        if (activeRef && navRef.current) {
+            const navRect = navRef.current.getBoundingClientRect();
+            const itemRect = activeRef.getBoundingClientRect();
+            setIndicatorStyle({
+                left: `${itemRect.left - navRect.left + itemRect.width / 2 - 20}px`,
+                width: '40px'
+            });
+        }
+    }, [active, navItems.length]);
 
     const handleClick = (id) => {
         setActive(id);
@@ -26,21 +48,12 @@ export function MobileNav({
 
     return (
         <nav
-            className="mobile-nav"
-            style={{
-                position: 'fixed',
-                bottom: '20px',
-                left: '20px',
-                right: '20px',
-                padding: '10px',
-                display: 'flex',
-                justifyContent: 'space-around',
-                zIndex: 1000,
-                background: 'var(--bg-primary)',
-                border: 'var(--border)',
-                boxShadow: '4px 4px 0px var(--text-primary)'
-            }}
+            ref={navRef}
+            className="mobile-bottom-nav"
         >
+            {/* Sliding indicator pill */}
+            <div className="mobile-nav-indicator" style={indicatorStyle} />
+
             {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = active === item.id;
@@ -48,23 +61,14 @@ export function MobileNav({
                 return (
                     <button
                         key={item.id}
+                        ref={el => itemRefs.current[item.id] = el}
                         onClick={() => handleClick(item.id)}
-                        className="btn"
-                        style={{
-                            flex: 1,
-                            background: isActive ? 'var(--text-primary)' : 'transparent',
-                            color: isActive ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                            padding: '12px 5px',
-                            transition: 'all 0.1s ease',
-                            border: 'none',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}
+                        className={`mobile-nav-item ${isActive ? 'mobile-nav-item-active' : ''}`}
                     >
-                        <Icon size={18} strokeWidth={isActive ? 3 : 2} />
-                        <span className="mono" style={{ fontSize: '0.6rem', fontWeight: 800 }}>
+                        <div className={`mobile-nav-icon ${isActive ? 'mobile-nav-icon-active' : ''}`}>
+                            <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+                        </div>
+                        <span className={`mobile-nav-label ${isActive ? 'mobile-nav-label-active' : ''}`}>
                             {item.label}
                         </span>
                     </button>

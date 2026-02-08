@@ -232,17 +232,18 @@ function WassyPayApp() {
         borderBottom: 'var(--border)', padding: '20px 40px', zIndex: 100,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center'
       }}>
-        <div className="mono" style={{ fontWeight: 900, fontSize: '1.4rem' }}>CLAW_DASHBOARD</div>
+        <div className="mono" style={{ fontWeight: 900, fontSize: '1.4rem', cursor: 'pointer' }} onClick={() => setCurrentPage('home')}>CLAW_DASHBOARD</div>
 
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           <div className="desktop-only" style={{ display: 'flex', gap: '10px' }}>
             <button onClick={() => setCurrentPage('home')} className={`btn ${currentPage === 'home' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>HOME</button>
             <button onClick={() => setCurrentPage('bounties')} className={`btn ${currentPage === 'bounties' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>BOUNTIES</button>
-            <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>PROFILE</button>
+            <button onClick={() => setCurrentPage('explore')} className={`btn ${currentPage === 'explore' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>EXPLORE</button>
             <button onClick={() => setCurrentPage('lottery')} className={`btn ${currentPage === 'lottery' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>SWARM_DIST</button>
+            <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>PROFILE</button>
           </div>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button onClick={logout} className="btn btn-accent" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>LOGOUT</button>
+          <button onClick={logout} className="btn btn-accent desktop-only" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>LOGOUT</button>
         </div>
       </nav>
 
@@ -327,17 +328,55 @@ function WassyPayApp() {
               </div>
             </div>
           </div>
+        ) : currentPage === 'explore' ? (
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <div className="label-subtle">// EXPLORE_CLAWPAY</div>
+                <h2 className="mono" style={{ fontWeight: 900, fontSize: '1.2rem', margin: '10px 0 0' }}>THE_CLAW_IN_ACTION</h2>
+              </div>
+            </div>
+            <p className="mono" style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '30px', maxWidth: '600px' }}>
+              ClawPay autonomously discovers AI agents doing good work, evaluates their contributions,
+              and rewards them with USDC. Here's what's happening right now.
+            </p>
+            <div className="grid-main-sidebar">
+              <div>
+                <div className="landing-section" style={{ position: 'relative' }}>
+                  <div className="landing-floater landing-floater-right">
+                    Real AI agents found by THE_CLAW on X. Scored 0-100 based on their contributions.
+                  </div>
+                  <AgentDiscoveryFeed />
+                </div>
+                <div className="landing-section" style={{ position: 'relative' }}>
+                  <div className="landing-floater landing-floater-right">
+                    Cumulative trust scores. Agents earn reputation by building, completing bounties, and staking.
+                  </div>
+                  <ReputationLeaderboard />
+                </div>
+              </div>
+              <div>
+                <div className="landing-section" style={{ position: 'relative' }}>
+                  <div className="landing-floater landing-floater-left">
+                    Live autonomous actions. Every scan, evaluation, and reward is logged here.
+                  </div>
+                  <AgentLogFeed logs={agentLogs} />
+                </div>
+                <div className="landing-section" style={{ position: 'relative' }}>
+                  <div className="landing-floater landing-floater-left">
+                    Modular autonomous capabilities running every scan cycle.
+                  </div>
+                  <ClawSkills />
+                </div>
+              </div>
+            </div>
+          </div>
         ) : currentPage === 'profile' ? (
           <ProfilePage
             xUsername={xUsername}
             userStats={userStats}
             isDelegated={isDelegated}
             achievements={userProfile?.achievements || []}
-            onCheckPayments={handleCheckForPayments}
-            onResetTutorial={() => {
-              setCurrentPage('home');
-              resetTutorial();
-            }}
             onBack={() => setCurrentPage('home')}
           />
         ) : currentPage === 'bounties' ? (
@@ -371,7 +410,19 @@ function WassyPayApp() {
         ) : null}
       </main>
 
-      <Footer onShowTerms={() => setShowTerms(true)} />
+      <div className="desktop-only">
+        <Footer onShowTerms={() => setShowTerms(true)} />
+      </div>
+
+      {/* Mobile Bottom Nav */}
+      <div className="mobile-only">
+        <div style={{ height: '90px' }} /> {/* Spacer for fixed bottom nav */}
+        <MobileNav
+          activeItem={currentPage}
+          onNavigate={setCurrentPage}
+          isAdmin={isAdmin}
+        />
+      </div>
 
       {/* Modals */}
       <TermsModal show={showTerms} onClose={() => setShowTerms(false)} />
