@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Home, User, Trophy, Crown, Ticket } from 'lucide-react';
+import { Home, User, Trophy, Crown, Ticket, Target, Compass } from 'lucide-react';
 import '../index.css';
 
 const baseNavItems = [
     { id: 'home', icon: Home, label: 'HOME' },
-    { id: 'leaders', icon: Trophy, label: 'LEADS' },
+    { id: 'bounties', icon: Target, label: 'BOUNTY' },
+    { id: 'explore', icon: Compass, label: 'EXPLORE' },
     { id: 'lottery', icon: Ticket, label: 'SWARM' },
     { id: 'profile', icon: User, label: 'PROFILE' },
 ];

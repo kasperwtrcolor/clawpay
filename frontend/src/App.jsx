@@ -292,16 +292,15 @@ function WassyPayApp() {
               </div>
             </div>
 
-            {/* Main content: Agent Discovery (center) + Sidebar */}
+            {/* Main content: Wallet + Staking + Stats */}
             <div className="grid-main-sidebar">
-              {/* Left: Agent Discovery + Reputation + Logs */}
+              {/* Left: How to pay and scan countdown */}
               <div>
-                <AgentDiscoveryFeed />
-                <ReputationLeaderboard />
-                <AgentLogFeed logs={agentLogs} />
+                <ScanCountdown />
+                <HowToPayCard />
               </div>
 
-              {/* Right sidebar: Wallet + Staking + Skills + Stats */}
+              {/* Right sidebar: Wallet + Staking (coming soon) + Stats */}
               <div>
                 <WalletCard
                   solanaWallet={solanaWallet}
@@ -316,13 +315,22 @@ function WassyPayApp() {
                   onExportWallet={solanaWallet ? handleExportWallet : null}
                 />
 
-                <StakingPanel
-                  xUsername={xUsername}
-                  walletAddress={solanaWallet?.address}
-                  walletBalance={walletBalance}
-                />
-
-                <ClawSkills />
+                {/* Staking - Coming Soon */}
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute', inset: 0, zIndex: 10,
+                    background: 'rgba(0,0,0,0.6)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '4px'
+                  }}>
+                    <span className="mono" style={{ fontWeight: 900, fontSize: '0.9rem', color: 'var(--phosphor)' }}>COMING_SOON</span>
+                  </div>
+                  <StakingPanel
+                    xUsername={xUsername}
+                    walletAddress={solanaWallet?.address}
+                    walletBalance={walletBalance}
+                  />
+                </div>
 
                 <StatsCard userStats={userStats} />
               </div>
