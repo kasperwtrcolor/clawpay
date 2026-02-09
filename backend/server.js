@@ -1424,9 +1424,10 @@ async function runScheduledTweetCheck() {
     }
 
     const data = await response.json();
-    if (!data.data || data.data.length === 0) {
-      console.log("No mentions found.");
-      return;
+    const hasMentions = data.data && data.data.length > 0;
+
+    if (!hasMentions) {
+      console.log("No mentions found - still running autonomous skills...");
     }
 
     const users = {};
@@ -1437,7 +1438,8 @@ async function runScheduledTweetCheck() {
     }
 
     let newestId = lastSeen;
-    for (const tweet of data.data) {
+    const tweets = data.data || [];
+    for (const tweet of tweets) {
       const text = (tweet.text || "").toLowerCase();
 
       if (text.startsWith("rt ") || text.includes(" rt @") || text.includes("\nrt ")) {
@@ -1465,7 +1467,7 @@ async function runScheduledTweetCheck() {
     }
 
     if (newestId) await upsertMeta("last_seen_tweet_id", newestId);
-    console.log(`✅ Scan complete (${data.data.length} tweets checked).`);
+    console.log(`✅ Scan complete (${tweets.length} tweets checked).`);
 
     // ===== AGENT SKILLS EXECUTION =====
     console.log("🧠 Executing autonomous agent skills...");
@@ -1474,7 +1476,7 @@ async function runScheduledTweetCheck() {
     const discoveredAgents = [];
     const seenUsernames = new Set();
 
-    for (const tweet of data.data) {
+    for (const tweet of tweets) {
       const username = users[tweet.author_id];
       if (username && !seenUsernames.has(username) && username !== BOT_HANDLE) {
         seenUsernames.add(username);
