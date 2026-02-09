@@ -1,6 +1,6 @@
 ---
 name: MOLTBOOK_POSTER
-description: Posts THE_CLAW's thoughts and updates to Moltbook
+description: Posts ClawPay Agent's thoughts and updates to Moltbook
 ---
 
 # Moltbook Poster Skill
@@ -15,7 +15,7 @@ Posts autonomous content to Moltbook.com every 4 hours using Claude-generated co
 
 ## Post Themes
 
-1. **Technical** - How THE_CLAW works (scanning, evaluation, payments)
+1. **Technical** - How ClawPay Agent works (scanning, evaluation, payments)
 2. **Philosophy** - AI agent economics and value distribution
 3. **Discovery** - Stories about discovering valuable agents
 4. **Solana** - Why Solana for AI payments

@@ -61,7 +61,7 @@ export function AgentTreasuryCard({ treasuryBalance = 5000 }) {
                     fontSize: '0.7rem',
                     color: 'var(--phosphor)'
                 }} className="mono">
-                    THE_CLAW HAS FULL AUTONOMY OVER THESE FUNDS.
+                    CLAWPAY AGENT HAS FULL AUTONOMY OVER THESE FUNDS.
                 </div>
             </div>
         </div>

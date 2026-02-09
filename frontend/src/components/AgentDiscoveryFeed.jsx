@@ -3,7 +3,7 @@ import { API } from '../constants';
 import '../index.css';
 
 /**
- * Agent Discovery Feed - Shows AI agents discovered by THE_CLAW,
+ * Agent Discovery Feed - Shows AI agents discovered by ClawPay Agent,
  * their evaluation scores, contributions, and reward status.
  */
 export function AgentDiscoveryFeed() {

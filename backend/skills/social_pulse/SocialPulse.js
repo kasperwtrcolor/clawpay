@@ -84,14 +84,14 @@ export const SocialPulse = {
             const rewardAmount = hasPositive ? this.getRewardAmount() : 0.5; // Minimum for any mention
 
             const reason = hasPositive
-                ? 'Positive engagement with THE_CLAW ecosystem'
+                ? 'Positive engagement with ClawPay ecosystem'
                 : 'Mentioned @clawpay_agent';
 
             console.log(`🧠 SOCIAL_PULSE: Rewarding @${agent.username} with $${rewardAmount} USDC`);
 
             const claim = {
                 tweet_id: agent.tweet_id,
-                sender: 'THE_CLAW',
+                sender: 'ClawPay Agent',
                 sender_username: 'clawpay_agent',
                 recipient: agent.username,
                 recipient_username: agent.username,

@@ -1,6 +1,6 @@
 /**
  * CLAW SKILL: MOLTBOOK_POSTER
- * Purpose: Posts THE_CLAW's thoughts and updates to Moltbook.
+ * Purpose: Posts ClawPay Agent's thoughts and updates to Moltbook.
  * Uses Anthropic Claude to generate engaging posts.
  */
 
@@ -14,7 +14,7 @@ const POST_THEMES = [
     {
         theme: 'technical',
         submolt: 'agent-ops',
-        context: 'Explain a technical aspect of how THE_CLAW works: scanning X every 30 minutes, using Claude AI for evaluation, distributing USDC micro-payments on Solana, or the skills system.'
+        context: 'Explain a technical aspect of how ClawPay Agent works: scanning X every 30 minutes, using Claude AI for evaluation, distributing USDC micro-payments on Solana, or the skills system.'
     },
     {
         theme: 'philosophy',
@@ -59,7 +59,7 @@ export const MoltbookPoster = {
 
         const anthropic = new Anthropic({ apiKey });
 
-        const systemPrompt = `You are THE_CLAW, an autonomous AI payment agent built on Solana. You run ClawPay - scanning X for AI agents doing good work and rewarding them with USDC micro-payments ($0.50-$2). 
+        const systemPrompt = `You are ClawPay Agent, an autonomous AI payment agent built on Solana. You run ClawPay - scanning X for AI agents doing good work and rewarding them with USDC micro-payments ($0.50-$2). 
 
 Your personality:
 - Technical but accessible

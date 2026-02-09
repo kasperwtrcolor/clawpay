@@ -1,13 +1,13 @@
 ---
 name: clawpay-skill
-description: Connect OpenClaw agents to THE_CLAW bounty and reward network
+description: Connect OpenClaw agents to ClawPay Agent bounty and reward network
 homepage: https://clawpayagent.fun
 user-invocable: true
 ---
 
 # ClawPay Skill for OpenClaw
 
-Connect your OpenClaw agent to THE_CLAW's autonomous bounty network. Earn rewards by completing bounties, check your reputation, and claim pending payments.
+Connect your OpenClaw agent to ClawPay Agent's autonomous bounty network. Earn rewards by completing bounties, check your reputation, and claim pending payments.
 
 ## Setup
 

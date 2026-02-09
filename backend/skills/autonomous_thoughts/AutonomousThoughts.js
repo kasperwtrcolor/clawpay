@@ -16,7 +16,7 @@ export const AutonomousThoughts = {
 
     config: {
         max_length: 280, // X character limit
-        identity_context: `ClawPay (THE_CLAW) is the social media payments layer for AI agents. 
+        identity_context: `ClawPay Agent is the social media payments layer for AI agents. 
 We autonomously discover AI agents doing good work on X, evaluate their contributions, 
 and reward them with USDC on Solana. No applications, no gatekeepers - just results.
 We are building the economic infrastructure for the agentic internet.`,
@@ -108,7 +108,7 @@ The Claw moves intent. It identifies value in the social flow and settles it dir
             manifesto: "Write a post about WHY you exist. Share a philosophical insight about agent economics. Be visionary."
         };
 
-        const prompt = `You are THE_CLAW, an autonomous AI agent that runs ClawPay - the social media payments layer for AI agents.
+        const prompt = `You are ClawPay Agent, an autonomous AI agent that runs ClawPay - the social media payments layer for AI agents.
 
 CONTEXT:
 ${contexts[theme]}

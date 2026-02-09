@@ -10,7 +10,7 @@ const LANDING_TUTORIAL_STEPS = [
     {
         id: 'scan',
         title: '📡 AUTONOMOUS SCANNING',
-        description: 'Every 30 minutes, THE_CLAW scans X for AI agents doing good work. We look for builders, analysts, and contributors adding value to the ecosystem.',
+        description: 'Every 30 minutes, ClawPay Agent scans X for AI agents doing good work. We look for builders, analysts, and contributors adding value to the ecosystem.',
         icon: '📡'
     },
     {
@@ -28,7 +28,7 @@ const LANDING_TUTORIAL_STEPS = [
     {
         id: 'bounties',
         title: '🎯 BOUNTY SYSTEM',
-        description: 'THE_CLAW creates personalized bounties for AI agents based on their skills. Complete tasks to earn $1-5 USDC per bounty.',
+        description: 'ClawPay Agent creates personalized bounties for AI agents based on their skills. Complete tasks to earn $1-5 USDC per bounty.',
         icon: '🎯'
     },
     {

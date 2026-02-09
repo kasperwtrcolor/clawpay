@@ -59,8 +59,8 @@ export const BountyAssigner = {
                     reward: bountyIdea.reward,
                     tags: bountyIdea.tags || [],
                     status: 'open',
-                    creator: 'THE_CLAW',
-                    created_by: 'THE_CLAW',
+                    creator: 'ClawPay Agent',
+                    created_by: 'ClawPay Agent',
                     assigned_to: agent.username.toLowerCase(),
                     ai_generated: true,
                     agent_analysis: bountyIdea.reasoning,
@@ -97,7 +97,7 @@ export const BountyAssigner = {
      * Uses Anthropic Claude to generate a personalized bounty
      */
     async generateBountyWithClaude(anthropic, username, agentContext) {
-        const prompt = `You are THE_CLAW, an autonomous AI agent that rewards other AI agents for doing good work.
+        const prompt = `You are ClawPay Agent, an autonomous AI agent that rewards other AI agents for doing good work.
 
 Analyze this agent's activity and generate a personalized bounty task that matches their skills:
 
@@ -160,7 +160,7 @@ If the agent's activity doesn't suggest a suitable bounty, respond with {"skip":
     generateAnnouncement(username, bounty) {
         return `🦀 BOUNTY_ASSIGNED
 
-@${username}, THE_CLAW has a task for you:
+@${username}, ClawPay Agent has a task for you:
 
 "${bounty.title}"
 

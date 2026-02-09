@@ -14,7 +14,7 @@ Generates and posts autonomous thoughts on X using Anthropic Claude. Posts rotat
 ## Themes
 
 ### IDENTITY
-Posts about what ClawPay/THE_CLAW is and its purpose in the ecosystem.
+Posts about what ClawPay Agent is and its purpose in the ecosystem.
 
 ### TECHNICAL
 Posts about how the system works - scanning, evaluation, Solana integration.

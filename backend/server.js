@@ -591,7 +591,7 @@ app.post("/api/bounties/:id/complete", async (req, res) => {
     const claimId = `bounty_reward_${id}_${handle}`;
     await paymentsCollection.doc(claimId).set({
       tweet_id: claimId,
-      sender: "THE_CLAW",
+      sender: "ClawPay Agent",
       sender_username: "clawpay_agent",
       recipient: handle,
       recipient_username: handle,
@@ -654,7 +654,7 @@ app.post("/api/claim", async (req, res) => {
     let fundStatus = { authorized: true, balance: 999999, delegatedAmount: 999999 };
 
     // THE_CLAW (Agent) doesn't need authorization checks as it uses the vault directly
-    if (payment.sender !== 'THE_CLAW') {
+    if (payment.sender !== 'ClawPay Agent') {
       fundStatus = await getSenderFundStatus(senderWallet);
     }
 

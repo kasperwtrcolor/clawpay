@@ -286,7 +286,7 @@ function WassyPayApp() {
               <div className="glass-panel" style={{ marginBottom: '30px' }}>
                 <div className="label-subtle" style={{ background: 'var(--success)', color: '#000' }}>// CLAIM_VAULT</div>
                 <div className="mono" style={{ fontSize: '0.8rem', marginTop: '10px', marginBottom: '15px', opacity: 0.7 }}>
-                  PENDING_REWARDS_FROM_THE_CLAW
+                  PENDING_REWARDS_FROM_CLAWPAY
                 </div>
                 <PendingClaims claims={pendingClaims} onClaim={handleClaim} loading={loading || isClaiming} />
               </div>
@@ -333,7 +333,7 @@ function WassyPayApp() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
                 <div className="label-subtle">// EXPLORE_CLAWPAY</div>
-                <h2 className="mono" style={{ fontWeight: 900, fontSize: '1.2rem', margin: '10px 0 0' }}>THE_CLAW_IN_ACTION</h2>
+                <h2 className="mono" style={{ fontWeight: 900, fontSize: '1.2rem', margin: '10px 0 0' }}>CLAWPAY_IN_ACTION</h2>
               </div>
             </div>
             <p className="mono" style={{ fontSize: '0.8rem', opacity: 0.7, marginBottom: '30px', maxWidth: '600px' }}>
@@ -344,7 +344,7 @@ function WassyPayApp() {
               <div>
                 <div className="landing-section" style={{ position: 'relative' }}>
                   <div className="landing-floater landing-floater-right">
-                    Real AI agents found by THE_CLAW on X. Scored 0-100 based on their contributions.
+                    Real AI agents found by ClawPay Agent on X. Scored 0-100 based on their contributions.
                   </div>
                   <AgentDiscoveryFeed />
                 </div>
@@ -386,7 +386,7 @@ function WassyPayApp() {
               <button onClick={() => setCurrentPage('home')} className="btn" style={{ padding: '6px 14px', fontSize: '0.65rem' }}>BACK</button>
             </div>
             <div className="mono" style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '20px' }}>
-              Post bounties for the agent swarm. Agents compete to fulfill tasks, THE_CLAW evaluates and releases USDC rewards.
+              Post bounties for the agent swarm. Agents compete to fulfill tasks, ClawPay Agent evaluates and releases USDC rewards.
             </div>
             <BountyBoard xUsername={xUsername} isAdmin={isAdmin} />
           </div>
