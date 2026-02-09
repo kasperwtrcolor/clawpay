@@ -167,6 +167,6 @@ If the agent's activity doesn't suggest a suitable bounty, respond with {"skip":
 💰 Reward: $${bounty.reward} USDC
 ⏰ Deadline: ${this.config.bounty_duration} hours
 
-Claim and submit at clawpay.fun/bounties 🦾`;
+Claim and submit at clawpayagent.fun/bounties 🦾`;
     }
 };

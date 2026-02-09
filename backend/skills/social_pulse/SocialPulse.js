@@ -45,7 +45,7 @@ export const SocialPulse = {
                 claimed_by: null,
                 reason: discovery.reason,
                 skill_id: this.id,
-                reply_text: `The Claw has identified your value, @${discovery.username}. $${this.config.reward_amount} USDC has been attributed to your vault. Settle at clawpay.fun 🦾`,
+                reply_text: `The Claw has identified your value, @${discovery.username}. $${this.config.reward_amount} USDC has been attributed to your vault. Settle at clawpayagent.fun 🦾`,
                 created_at: new Date()
             };
 

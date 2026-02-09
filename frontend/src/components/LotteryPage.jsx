@@ -122,7 +122,7 @@ export function LotteryPage({
                                     {isClaiming ? 'SETTLING...' : 'SETTLE_REWARD'}
                                 </button>
                                 <a
-                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`THE CLAW HAS IDENTIFIED ME. 🦾\n\nI just received a $${currentLottery.prizeAmount} SWARM_DISTRIBUTION reward from @clawpay_agent. \n\nInitiate session: clawpay.fun`)}`}
+                                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`THE CLAW HAS IDENTIFIED ME. 🦾\n\nI just received a $${currentLottery.prizeAmount} SWARM_DISTRIBUTION reward from @clawpay_agent. \n\nInitiate session: clawpayagent.fun`)}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="btn btn-primary"

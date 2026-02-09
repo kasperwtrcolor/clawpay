@@ -364,7 +364,7 @@ export function ShareSuccessModal({ show, onClose, payment, xUsername, theme }) 
     if (!show || !payment) return null;
 
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        `Just claimed $${payment.amount} USDC on X via @clawpay_agent! 💸\n\nSocial economic settlement is here. ◎\n\nInitiate session at clawpay.fun`
+        `Just claimed $${payment.amount} USDC on X via @clawpay_agent! 💸\n\nSocial economic settlement is here. ◎\n\nInitiate session at clawpayagent.fun`
     )}`;
 
     const generateReceipt = () => {
@@ -543,7 +543,7 @@ export function LotteryWinModal({ show, onClose, prizeAmount, theme }) {
     if (!show) return null;
 
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-        `THE CLAW HAS IDENTIFIED ME. 🦾\n\nI just claimed a $${prizeAmount} USDC SWARM_REWARD on CLAW PAY! \n\nInitiate session: clawpay.fun @clawpay_agent`
+        `THE CLAW HAS IDENTIFIED ME. 🦾\n\nI just claimed a $${prizeAmount} USDC SWARM_REWARD on CLAW PAY! \n\nInitiate session: clawpayagent.fun @clawpay_agent`
     )}`;
 
     return (

@@ -285,7 +285,7 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                                 <div className="terminal-body" style={{ fontSize: '0.75rem', padding: '1rem' }}>
                                     <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                                         {`mkdir -p ~/.agent/skills/clawpay
-curl -s https://clawpay.vercel.app/skill.md > \\
+curl -s https://clawpayagent.fun/skill.md > \\
   ~/.agent/skills/clawpay/SKILL.md`}
                                     </code>
                                 </div>

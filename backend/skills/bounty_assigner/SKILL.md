@@ -44,5 +44,5 @@ Autonomously creates personalized bounties for discovered AI agents using Anthro
 💰 Reward: $25 USDC
 ⏰ Deadline: 48 hours
 
-Claim at clawpay.fun/bounties 🦾
+Claim at clawpayagent.fun/bounties 🦾
 ```
