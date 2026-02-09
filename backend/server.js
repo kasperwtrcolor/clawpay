@@ -11,6 +11,7 @@ import { SocialPulse } from "./skills/social_pulse/SocialPulse.js";
 import { BountyAssigner } from "./skills/bounty_assigner/BountyAssigner.js";
 import { AutonomousThoughts } from "./skills/autonomous_thoughts/AutonomousThoughts.js";
 import { MoltbookPoster } from "./skills/moltbook_poster/MoltbookPoster.js";
+import { MoltbookDiscovery } from "./skills/moltbook_discovery/MoltbookDiscovery.js";
 import { createOpenClawAuthMiddleware, isValidHandle } from "./middleware/authMiddleware.js";
 import { OpenClawConnector } from "./skills/openclaw_connector/OpenClawConnector.js";
 
@@ -1487,7 +1488,7 @@ async function runScheduledTweetCheck() {
     console.log(`🤖 Total discovered agents: ${discoveredAgents.length} (mentions + hashtags)`);
 
     try {
-      const skills = [SocialPulse, BountyAssigner, AutonomousThoughts, MoltbookPoster];
+      const skills = [SocialPulse, BountyAssigner, AutonomousThoughts, MoltbookPoster, MoltbookDiscovery];
       for (const skill of skills) {
         const results = await skill.run({ firestore, discoveredAgents });
         for (const result of results) {
@@ -1688,6 +1689,154 @@ app.get("/api/openclaw/claims/:handle", openClawAuth, async (req, res) => {
     }
   } catch (e) {
     console.error("/api/openclaw/claims error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Agent auto-claim: Claim pending rewards with wallet address
+// Lowest friction: Agent provides wallet on first claim, stored for future claims
+app.post("/api/openclaw/claim", openClawAuth, async (req, res) => {
+  try {
+    const { wallet_address, claim_id } = req.body;
+    const agentHandle = req.agentHandle; // From auth middleware
+
+    if (!wallet_address) {
+      return res.status(400).json({ success: false, error: "wallet_address is required" });
+    }
+
+    // Validate Solana wallet address
+    try {
+      new PublicKey(wallet_address);
+    } catch (e) {
+      return res.status(400).json({ success: false, error: "Invalid Solana wallet address" });
+    }
+
+    // Store or update agent's wallet address
+    const agentDoc = firestore.collection('openclaw_agents').doc(agentHandle.toLowerCase());
+    await agentDoc.set({
+      wallet_address,
+      updated_at: new Date()
+    }, { merge: true });
+
+    // Find pending claims for this agent
+    let claimsQuery = paymentsCollection
+      .where('recipient_username', '==', agentHandle.toLowerCase())
+      .where('status', '==', 'pending');
+
+    // If specific claim_id provided, only claim that one
+    let claimsSnapshot;
+    if (claim_id) {
+      const claimDoc = await paymentsCollection.doc(claim_id).get();
+      if (!claimDoc.exists) {
+        return res.status(404).json({ success: false, error: "Claim not found" });
+      }
+      const claimData = claimDoc.data();
+      if (claimData.recipient_username !== agentHandle.toLowerCase()) {
+        return res.status(403).json({ success: false, error: "This claim doesn't belong to you" });
+      }
+      if (claimData.status !== 'pending') {
+        return res.status(400).json({ success: false, error: "Claim already processed" });
+      }
+      claimsSnapshot = { docs: [claimDoc], empty: false };
+    } else {
+      claimsSnapshot = await claimsQuery.get();
+    }
+
+    if (claimsSnapshot.empty) {
+      return res.json({ success: true, message: "No pending claims", claims_processed: 0, total_amount: 0 });
+    }
+
+    const results = [];
+    let totalAmount = 0;
+    let successCount = 0;
+
+    for (const doc of claimsSnapshot.docs) {
+      const claim = doc.data();
+      const claimAmount = claim.amount || 0;
+
+      try {
+        // Transfer USDC to agent's wallet
+        const recipientPubkey = new PublicKey(wallet_address);
+        const recipientAta = await getAssociatedTokenAddress(USDC_MINT, recipientPubkey);
+
+        const tx = new Transaction();
+        tx.add(
+          ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50000 })
+        );
+
+        // Check if recipient ATA exists, create if not
+        try {
+          await getAccount(connection, recipientAta);
+        } catch (e) {
+          tx.add(
+            createAssociatedTokenAccountInstruction(
+              vaultKeypair.publicKey,
+              recipientAta,
+              recipientPubkey,
+              USDC_MINT
+            )
+          );
+        }
+
+        // Add transfer instruction (USDC has 6 decimals)
+        const amountInLamports = BigInt(Math.round(claimAmount * 1_000_000));
+        tx.add(
+          createTransferInstruction(
+            vaultAta,
+            recipientAta,
+            vaultKeypair.publicKey,
+            amountInLamports,
+            [],
+            TOKEN_PROGRAM_ID
+          )
+        );
+
+        tx.feePayer = vaultKeypair.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.sign(vaultKeypair);
+
+        const signature = await connection.sendRawTransaction(tx.serialize());
+        await connection.confirmTransaction(signature, 'confirmed');
+
+        // Update claim status
+        await paymentsCollection.doc(doc.id).update({
+          status: 'claimed',
+          claimed_by: wallet_address,
+          claimed_at: new Date(),
+          tx_signature: signature
+        });
+
+        results.push({
+          claim_id: doc.id,
+          amount: claimAmount,
+          tx_signature: signature,
+          status: 'success'
+        });
+        totalAmount += claimAmount;
+        successCount++;
+
+        console.log(`✅ Agent claim: ${agentHandle} claimed $${claimAmount} USDC -> ${wallet_address}`);
+      } catch (txError) {
+        console.error(`❌ Agent claim transfer error for ${doc.id}:`, txError.message);
+        results.push({
+          claim_id: doc.id,
+          amount: claimAmount,
+          status: 'failed',
+          error: txError.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      claims_processed: successCount,
+      total_amount: totalAmount,
+      wallet_address,
+      results
+    });
+
+  } catch (e) {
+    console.error("/api/openclaw/claim error:", e);
     res.status(500).json({ success: false, error: e.message });
   }
 });
