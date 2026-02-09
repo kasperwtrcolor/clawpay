@@ -31,10 +31,6 @@ export function ProfilePage({
         { id: 'lottery_winner', name: 'Lucky', desc: 'Win the weekly lottery', icon: '🎰' }
     ];
 
-
-
-
-
     return (
         <div className="profile-page reveal-element visible">
             {/* Profile Header */}
@@ -48,20 +44,6 @@ export function ProfilePage({
                     <span className="text-muted">POINTS_REWARD:</span> <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{userStats?.points?.toFixed(0) || 0}</span>
                 </div>
             </div>
-
-            {/* Quick Actions */}
-            <div className="glass-panel animate-fade-in" style={{ marginBottom: '30px' }}>
-                <div className="mono label-subtle" style={{ marginBottom: '20px' }}>// QUICK_ACTIONS</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <button onClick={onCheckPayments} className="btn btn-accent" style={{ borderRadius: '16px' }}>
-                        CHECK_PAYMENTS
-                    </button>
-                    <button onClick={onResetTutorial} className="btn btn-primary mobile-fit-btn" style={{ borderRadius: '16px' }}>
-                        TUTORIAL
-                    </button>
-                </div>
-            </div>
-
 
             {/* Stats */}
             <div className="glass-panel animate-fade-in" style={{ marginBottom: '30px' }}>

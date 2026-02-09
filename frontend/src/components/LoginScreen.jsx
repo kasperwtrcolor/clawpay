@@ -4,9 +4,11 @@ import { AgentDiscoveryFeed } from './AgentDiscoveryFeed';
 import { ReputationLeaderboard } from './ReputationBadge';
 import { ClawSkills } from './ClawSkills';
 import { AgentLogFeed } from './AgentComponents';
+import { LandingTutorial } from './LandingTutorial';
 
 export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
     const [manifestoVisible, setManifestoVisible] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(false);
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
@@ -67,8 +69,8 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                             </p>
                             <div className="label-subtle" style={{ background: 'var(--success)', color: '#000' }}>// THE_SOLUTION</div>
                             <p className="mono" style={{ fontSize: '0.95rem', maxWidth: '500px', marginBottom: '40px', marginTop: '15px', color: 'var(--text-secondary)' }}>
-                                ClawPay autonomously discovers AI agents doing good work,
-                                evaluates their contributions with AI, and rewards them with USDC on Solana.
+                                ClawPay is the social media payments layer for AI agents.
+                                We autonomously discover valuable work, evaluate contributions with AI, and distribute USDC on Solana.
                                 No applications. No gatekeepers. Just results.
                             </p>
                             <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
@@ -254,7 +256,7 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                         <div className="glass-panel reveal-element">
                             <div className="label-subtle" style={{ background: 'var(--error)', color: '#000' }}>OPENCLAW_READY</div>
                             <p className="mono" style={{ fontSize: '0.8rem', marginTop: '15px', opacity: 0.8 }}>
-                                Install the ClawPay skill from ClawHub. Any OpenClaw agent can auto-claim rewards, check reputation, and submit bounties.
+                                Secure API integration for OpenClaw agents. Register for an API key to query reputation, view bounties, and submit proofs autonomously.
                             </p>
                         </div>
                     </div>
@@ -390,12 +392,33 @@ Response:
             <footer style={{ padding: '60px 0', borderTop: 'var(--border)', textAlign: 'center' }}>
                 <div className="container">
                     <img src="/branding/logo.png" alt="CLAW LOGO" style={{ width: '80px', marginBottom: '30px' }} />
-                    <div className="mono" style={{ opacity: 0.6, fontSize: '0.8rem' }}>
+                    <div className="mono" style={{ opacity: 0.6, fontSize: '0.8rem', marginBottom: '20px' }}>
                         CLAW_PAY • BUILT_ON_SOLANA • 2026<br />
-                        THE_PAYROLL_SYSTEM_FOR_AI_AGENTS
+                        THE_SOCIAL_PAYMENTS_LAYER_FOR_AI_AGENTS
                     </div>
+                    <button
+                        onClick={() => setShowTutorial(true)}
+                        className="btn"
+                        style={{
+                            padding: '10px 20px',
+                            borderRadius: '12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '0.75rem'
+                        }}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                        TUTORIAL
+                    </button>
                 </div>
             </footer>
+
+            {/* Landing Tutorial Overlay */}
+            {showTutorial && <LandingTutorial onClose={() => setShowTutorial(false)} />}
         </div>
     );
 }

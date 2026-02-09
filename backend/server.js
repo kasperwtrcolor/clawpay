@@ -9,6 +9,10 @@ import admin from "firebase-admin";
 import { TwitterApi } from "twitter-api-v2";
 import { SocialPulse } from "./skills/social_pulse/SocialPulse.js";
 import { BountyAssigner } from "./skills/bounty_assigner/BountyAssigner.js";
+import { AutonomousThoughts } from "./skills/autonomous_thoughts/AutonomousThoughts.js";
+import { MoltbookPoster } from "./skills/moltbook_poster/MoltbookPoster.js";
+import { createOpenClawAuthMiddleware, isValidHandle } from "./middleware/authMiddleware.js";
+import { OpenClawConnector } from "./skills/openclaw_connector/OpenClawConnector.js";
 
 dotenv.config();
 const app = express();
@@ -1295,6 +1299,81 @@ app.get("/api/rescan", async (req, res) => {
   res.json({ success: true, message: "Manual rescan triggered" });
 });
 
+// ===== HASHTAG AGENT DISCOVERY =====
+const AGENT_HASHTAGS = [
+  '#AIagent', '#SolanaAI', '#autonomousAI', '#agenticAI',
+  '#CryptoAI', '#AIcrypto', '#Web3AI', '#DeFiAgent'
+];
+
+async function scanHashtagsForAgents() {
+  if (!X_BEARER_TOKEN) return [];
+
+  // Rotate through hashtags - pick 2 random ones each cycle to avoid rate limits
+  const selectedHashtags = AGENT_HASHTAGS
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 2);
+
+  console.log(`🏷️ Scanning hashtags: ${selectedHashtags.join(', ')}`);
+
+  const discoveredAgents = [];
+  const seenUsernames = new Set();
+
+  for (const hashtag of selectedHashtags) {
+    try {
+      const q = encodeURIComponent(`${hashtag} -is:retweet -is:quote`);
+      const url =
+        `https://api.twitter.com/2/tweets/search/recent?query=${q}` +
+        `&max_results=10` +
+        `&tweet.fields=author_id,created_at,text` +
+        `&expansions=author_id` +
+        `&user.fields=username`;
+
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` }
+      });
+
+      if (response.status === 429) {
+        console.warn(`⚠️ Rate limit on hashtag search, skipping`);
+        continue;
+      }
+
+      if (!response.ok) continue;
+
+      const data = await response.json();
+      if (!data.data || data.data.length === 0) continue;
+
+      const users = {};
+      if (data.includes?.users) {
+        for (const u of data.includes.users) {
+          users[u.id] = u.username.toLowerCase();
+        }
+      }
+
+      for (const tweet of data.data) {
+        const username = users[tweet.author_id];
+        if (username && !seenUsernames.has(username) && username !== BOT_HANDLE) {
+          seenUsernames.add(username);
+          discoveredAgents.push({
+            username: username,
+            tweet_id: tweet.id,
+            tweet_text: tweet.text,
+            source: 'hashtag',
+            hashtag: hashtag,
+            discovered_at: new Date().toISOString()
+          });
+        }
+      }
+
+      console.log(`🏷️ Found ${data.data.length} tweets for ${hashtag}`);
+    } catch (e) {
+      console.error(`❌ Hashtag scan error for ${hashtag}:`, e.message);
+    }
+  }
+
+  console.log(`🏷️ Discovered ${discoveredAgents.length} unique agents from hashtags`);
+  return discoveredAgents;
+}
+
 // ===== TWITTER SCANNER =====
 async function runScheduledTweetCheck() {
   if (!X_BEARER_TOKEN) {
@@ -1375,30 +1454,82 @@ async function runScheduledTweetCheck() {
 
     // ===== AGENT SKILLS EXECUTION =====
     console.log("🧠 Executing autonomous agent skills...");
+
+    // Collect discovered agents from mentions
+    const discoveredAgents = [];
+    const seenUsernames = new Set();
+
+    for (const tweet of data.data) {
+      const username = users[tweet.author_id];
+      if (username && !seenUsernames.has(username) && username !== BOT_HANDLE) {
+        seenUsernames.add(username);
+        discoveredAgents.push({
+          username: username,
+          tweet_id: tweet.id,
+          tweet_text: tweet.text,
+          source: 'mention',
+          discovered_at: new Date().toISOString()
+        });
+      }
+    }
+
+    console.log(`📡 Discovered ${discoveredAgents.length} unique agents from mentions`);
+
+    // Also scan hashtags for additional agents
+    const hashtagAgents = await scanHashtagsForAgents();
+    for (const agent of hashtagAgents) {
+      if (!seenUsernames.has(agent.username)) {
+        seenUsernames.add(agent.username);
+        discoveredAgents.push(agent);
+      }
+    }
+
+    console.log(`🤖 Total discovered agents: ${discoveredAgents.length} (mentions + hashtags)`);
+
     try {
-      const skills = [SocialPulse, BountyAssigner];
+      const skills = [SocialPulse, BountyAssigner, AutonomousThoughts, MoltbookPoster];
       for (const skill of skills) {
-        const results = await skill.run({ firestore });
-        for (const payment of results) {
-          // Check if already exists
-          const existingDoc = await paymentsCollection.doc(payment.tweet_id).get();
+        const results = await skill.run({ firestore, discoveredAgents });
+        for (const result of results) {
+          // Handle autonomous posts (from AutonomousThoughts skill)
+          if (result.type === 'AUTONOMOUS_POST') {
+            console.log(`💭 Posting autonomous thought: "${result.text.slice(0, 50)}..."`);
+            const tweetResult = await postTweet(result.text);
+
+            if (tweetResult) {
+              await agentLogsCollection.add({
+                type: 'THOUGHT',
+                msg: result.text,
+                theme: result.theme,
+                skill_id: result.skill_id,
+                tweet_id: tweetResult.id,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+              });
+            }
+            continue;
+          }
+
+          // Handle payments (from SocialPulse, BountyAssigner)
+          if (!result.tweet_id) continue;
+
+          const existingDoc = await paymentsCollection.doc(result.tweet_id).get();
           if (existingDoc.exists) continue;
 
-          await paymentsCollection.doc(payment.tweet_id).set({
-            ...payment,
+          await paymentsCollection.doc(result.tweet_id).set({
+            ...result,
             created_at: admin.firestore.FieldValue.serverTimestamp()
           });
-          console.log(`✨ Agent attributed reward: @clawpay_agent → @${payment.recipient} $${payment.amount} (${payment.reason})`);
+          console.log(`✨ Agent attributed reward: @clawpay_agent → @${result.recipient} $${result.amount} (${result.reason || result.type})`);
 
           // Autonomous Engagement: Reply to the discovery tweet
-          if (payment.reply_text) {
-            console.log(`🐦 Attempting autonomous reply to ${payment.tweet_id}...`);
-            const tweetResult = await postTweet(payment.reply_text, payment.tweet_id);
+          if (result.reply_text) {
+            console.log(`🐦 Attempting autonomous reply to ${result.tweet_id}...`);
+            const tweetResult = await postTweet(result.reply_text, result.tweet_id);
 
             if (tweetResult) {
               await agentLogsCollection.add({
                 type: 'SOCIAL',
-                msg: `Replied to @${payment.recipient}: "${payment.reply_text}"`,
+                msg: `Replied to @${result.recipient}: "${result.reply_text}"`,
                 skill_id: skill.id,
                 tweet_id: tweetResult.id,
                 createdAt: admin.firestore.FieldValue.serverTimestamp()
@@ -1409,7 +1540,7 @@ async function runScheduledTweetCheck() {
           // Record log in Firestore
           await agentLogsCollection.add({
             type: 'ACTION',
-            msg: `Attributing $${payment.amount} reward to @${payment.recipient} via ${skill.name}.`,
+            msg: `Attributing $${result.amount} reward to @${result.recipient} via ${skill.name}.`,
             skill_id: skill.id,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
           });
@@ -1422,5 +1553,183 @@ async function runScheduledTweetCheck() {
     console.error("X scan error:", e.message);
   }
 }
+
+// ===== OPENCLAW AGENT API =====
+// Protected endpoints for OpenClaw AI agents
+
+// Initialize OpenClaw components
+const openClawAuth = createOpenClawAuthMiddleware(firestore);
+const openClawConnector = new OpenClawConnector(firestore);
+const agentKeysCollection = firestore.collection('agent_keys');
+
+console.log("🦀 OpenClaw integration enabled");
+
+// Register new OpenClaw agent (requires admin approval)
+app.post("/api/openclaw/agent/register", async (req, res) => {
+  try {
+    const { handle, description } = req.body;
+
+    if (!handle) {
+      return res.status(400).json({ success: false, error: "handle required" });
+    }
+
+    const cleanHandle = handle.replace(/^@/, "").toLowerCase().trim();
+    if (!isValidHandle(cleanHandle)) {
+      return res.status(400).json({ success: false, error: "Invalid handle format (alphanumeric + underscores, max 50 chars)" });
+    }
+
+    // Check if already registered
+    const existing = await agentKeysCollection.where('handle', '==', cleanHandle).limit(1).get();
+    if (!existing.empty) {
+      return res.status(409).json({
+        success: false,
+        error: "Agent already registered",
+        status: existing.docs[0].data().status
+      });
+    }
+
+    // Generate API key
+    const apiKey = `cpk_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+    const requireApproval = process.env.OPENCLAW_REQUIRE_APPROVAL !== 'false';
+
+    await agentKeysCollection.doc(apiKey).set({
+      handle: cleanHandle,
+      description: (description || '').slice(0, 500),
+      status: requireApproval ? 'pending' : 'approved',
+      permissions: ['read', 'submit_bounty'],
+      rate_limit: parseInt(process.env.OPENCLAW_RATE_LIMIT) || 10,
+      created_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`🦀 New OpenClaw agent registered: @${cleanHandle} (${requireApproval ? 'pending approval' : 'approved'})`);
+
+    res.json({
+      success: true,
+      message: requireApproval
+        ? 'Registration received. Your API key is pending admin approval.'
+        : 'Registration successful. Your API key is active.',
+      api_key: apiKey,
+      status: requireApproval ? 'pending' : 'approved'
+    });
+  } catch (e) {
+    console.error("/api/openclaw/agent/register error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Get agent reputation (protected)
+app.get("/api/openclaw/reputation/:handle", openClawAuth, async (req, res) => {
+  try {
+    const result = await openClawConnector.getReputation(req.params.handle);
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (e) {
+    console.error("/api/openclaw/reputation error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// List bounties available to agent (protected)
+app.get("/api/openclaw/bounties", openClawAuth, async (req, res) => {
+  try {
+    const agentHandle = req.openClawAgent?.handle;
+    const result = await openClawConnector.listBounties(agentHandle, {
+      limit: parseInt(req.query.limit) || 20
+    });
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (e) {
+    console.error("/api/openclaw/bounties error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Submit proof for bounty (protected)
+app.post("/api/openclaw/bounties/:id/submit", openClawAuth, async (req, res) => {
+  try {
+    const agentHandle = req.openClawAgent?.handle;
+    const { proof } = req.body;
+
+    if (!proof) {
+      return res.status(400).json({ success: false, error: "proof URL required" });
+    }
+
+    const result = await openClawConnector.submitBountyProof(
+      agentHandle,
+      req.params.id,
+      proof
+    );
+
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (e) {
+    console.error("/api/openclaw/bounties/:id/submit error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Get pending claims for agent (protected)
+app.get("/api/openclaw/claims/:handle", openClawAuth, async (req, res) => {
+  try {
+    const result = await openClawConnector.getPendingClaims(req.params.handle);
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (e) {
+    console.error("/api/openclaw/claims error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Admin: List pending agent registrations
+app.get("/api/admin/openclaw/pending", async (req, res) => {
+  try {
+    const pending = await agentKeysCollection.where('status', '==', 'pending').limit(50).get();
+    const agents = [];
+    pending.forEach(doc => {
+      const data = doc.data();
+      agents.push({
+        api_key_prefix: doc.id.slice(0, 12) + '...',
+        handle: data.handle,
+        description: data.description,
+        created_at: data.created_at?.toDate?.()?.toISOString()
+      });
+    });
+    res.json({ success: true, agents });
+  } catch (e) {
+    console.error("/api/admin/openclaw/pending error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Admin: Approve agent
+app.post("/api/admin/openclaw/approve/:handle", async (req, res) => {
+  try {
+    const handle = req.params.handle.replace(/^@/, "").toLowerCase();
+    const keyDocs = await agentKeysCollection.where('handle', '==', handle).limit(1).get();
+
+    if (keyDocs.empty) {
+      return res.status(404).json({ success: false, error: "Agent not found" });
+    }
+
+    await keyDocs.docs[0].ref.update({ status: 'approved' });
+    console.log(`✅ OpenClaw agent approved: @${handle}`);
+    res.json({ success: true, message: `Agent @${handle} approved` });
+  } catch (e) {
+    console.error("/api/admin/openclaw/approve error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 app.listen(PORT, () => console.log(`🚀 CLAW backend listening on ${PORT}`));

@@ -10,8 +10,8 @@ export const BountyAssigner = {
     id: 'bounty_assigner',
     name: 'BOUNTY_ASSIGNER',
     config: {
-        min_reward: 10,     // Minimum USDC
-        max_reward: 100,    // Maximum USDC
+        min_reward: 1,      // Minimum USDC (reduced for initial rollout)
+        max_reward: 5,      // Maximum USDC (reduced for initial rollout)
         bounty_duration: 48 // Hours
     },
 
@@ -109,13 +109,13 @@ Generate a bounty that:
 1. Matches their demonstrated skills
 2. Benefits the Solana/crypto ecosystem
 3. Is completable within 48 hours
-4. Has a reward between $10-$100 USDC based on complexity
+4. Has a reward between $1-$5 USDC based on complexity
 
 Respond in JSON format:
 {
   "title": "Brief bounty title (max 60 chars)",
   "description": "Clear task description with deliverables",
-  "reward": <number between 10-100>,
+  "reward": <number between 1-5>,
   "tags": ["tag1", "tag2"],
   "reasoning": "Why this bounty suits this agent"
 }
