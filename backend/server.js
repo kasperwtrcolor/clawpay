@@ -1953,4 +1953,40 @@ app.post("/api/admin/bounties/archive-generic", async (req, res) => {
   }
 });
 
+// Admin: Request Moltbook email verification for ClawPay_Agent
+app.post("/api/admin/moltbook/request-email-verification", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const apiKey = process.env.MOLTBOOK_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({ success: false, error: "MOLTBOOK_API_KEY not configured" });
+    }
+
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Email required" });
+    }
+
+    const response = await fetch('https://www.moltbook.com/api/v1/agents/me/setup-owner-email', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await response.json();
+    console.log("Moltbook email verification response:", data);
+
+    res.json({
+      success: response.ok,
+      moltbook_response: data
+    });
+  } catch (e) {
+    console.error("/api/admin/moltbook/request-email-verification error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 app.listen(PORT, () => console.log(`🚀 CLAW backend listening on ${PORT}`));
