@@ -28,7 +28,17 @@ const ADMIN_WALLET = process.env.ADMIN_WALLET || "6SxLVfFovSjR2LAFcJ5wfT6RFjc8Gx
 const DEBUG_MODE = process.env.DEBUG_MODE === "true"; // Set to true for verbose logging
 
 // X API v2 (Write Access) - Requires OAuth 1.0a User Context
-const xClient = (process.env.X_API_KEY && process.env.X_API_SECRET && process.env.X_ACCESS_TOKEN && process.env.X_ACCESS_SECRET)
+const X_WRITE_VARS = {
+  X_API_KEY: !!process.env.X_API_KEY,
+  X_API_SECRET: !!process.env.X_API_SECRET,
+  X_ACCESS_TOKEN: !!process.env.X_ACCESS_TOKEN,
+  X_ACCESS_SECRET: !!process.env.X_ACCESS_SECRET
+};
+const X_WRITE_READY = Object.values(X_WRITE_VARS).every(v => v);
+
+console.log("🐦 X API Write Config:", X_WRITE_VARS);
+
+const xClient = X_WRITE_READY
   ? new TwitterApi({
     appKey: process.env.X_API_KEY,
     appSecret: process.env.X_API_SECRET,
@@ -38,7 +48,11 @@ const xClient = (process.env.X_API_KEY && process.env.X_API_SECRET && process.en
   : null;
 
 if (!xClient) {
-  console.warn("⚠️ X Write Access not configured. Autonomous posting will be simulated.");
+  console.warn("⚠️ X WRITE ACCESS NOT CONFIGURED - Missing env vars:",
+    Object.entries(X_WRITE_VARS).filter(([k, v]) => !v).map(([k]) => k).join(", "));
+  console.warn("⚠️ Autonomous X posting will be SIMULATED (not actually posted)");
+} else {
+  console.log("✅ X Write Access configured - Autonomous posting ENABLED");
 }
 
 // Solana configuration - SOLANA_RPC must be set in environment
