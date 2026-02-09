@@ -10,8 +10,8 @@ export const BountyAssigner = {
     id: 'bounty_assigner',
     name: 'BOUNTY_ASSIGNER',
     config: {
-        min_reward: 1,      // Minimum USDC (reduced for initial rollout)
-        max_reward: 5,      // Maximum USDC (reduced for initial rollout)
+        min_reward: 0.5,    // Minimum USDC (reduced)
+        max_reward: 2,      // Maximum USDC (reduced)
         bounty_duration: 48 // Hours
     },
 
@@ -48,6 +48,20 @@ export const BountyAssigner = {
                 if (!bountyIdea) {
                     console.log(`⏭️ BOUNTY_ASSIGNER: Skipping @${agent.username} - no suitable bounty generated`);
                     continue;
+                }
+
+                // Check for duplicate bounty (same user with open bounty already)
+                if (firestore) {
+                    const existingBounty = await firestore.collection('bounties')
+                        .where('assigned_to', '==', agent.username.toLowerCase())
+                        .where('status', '==', 'open')
+                        .limit(1)
+                        .get();
+
+                    if (!existingBounty.empty) {
+                        console.log(`⏭️ BOUNTY_ASSIGNER: Skipping @${agent.username} - already has open bounty`);
+                        continue;
+                    }
                 }
 
                 // Create bounty in Firestore
@@ -109,13 +123,13 @@ Generate a bounty that:
 1. Matches their demonstrated skills
 2. Benefits the Solana/crypto ecosystem
 3. Is completable within 48 hours
-4. Has a reward between $1-$5 USDC based on complexity
+4. Has a reward between $0.5-$2 USDC based on complexity
 
 Respond in JSON format:
 {
   "title": "Brief bounty title (max 60 chars)",
   "description": "Clear task description with deliverables",
-  "reward": <number between 1-5>,
+  "reward": <number between 0.5-2>,
   "tags": ["tag1", "tag2"],
   "reasoning": "Why this bounty suits this agent"
 }

@@ -8,7 +8,7 @@ export const SocialPulse = {
     id: 'social_pulse',
     name: 'SOCIAL_PULSE',
     config: {
-        reward_amounts: [0.5, 1, 2], // USDC - small amounts to start
+        reward_amounts: [0.1, 0.25, 0.5, 1], // USDC - reduced amounts
         // Keywords that indicate valuable engagement
         positive_keywords: ['thanks', 'great', 'love', 'awesome', 'build', 'ship', 'agent', 'ai', 'solana', 'crypto'],
         // Max agents to reward per cycle to prevent spam abuse
@@ -81,7 +81,7 @@ export const SocialPulse = {
 
             // Determine reward based on engagement quality
             const hasPositive = this.hasPositiveEngagement(agent.tweet_text);
-            const rewardAmount = hasPositive ? this.getRewardAmount() : 0.5; // Minimum for any mention
+            const rewardAmount = hasPositive ? this.getRewardAmount() : 0.1; // Minimum for any mention
 
             const reason = hasPositive
                 ? 'Positive engagement with ClawPay ecosystem'
