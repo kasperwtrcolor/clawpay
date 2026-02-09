@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { API } from '../constants';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc, collection, query, getDocs, onSnapshot } from 'firebase/firestore';
 import '../index.css';
 
 export function StakingPanel({ xUsername, walletAddress, walletBalance }) {
@@ -8,40 +9,49 @@ export function StakingPanel({ xUsername, walletAddress, walletBalance }) {
     const [globalStats, setGlobalStats] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    const fetchStakingInfo = useCallback(async () => {
+    // Read staking info from Firebase
+    useEffect(() => {
         if (!xUsername) return;
-        try {
-            const response = await fetch(`${API}/api/stakes/${xUsername}`);
-            if (response.ok) {
-                const data = await response.json();
-                setStakingInfo(data.stake);
+
+        const stakeRef = doc(db, 'stakes', xUsername.toLowerCase());
+        const unsubscribe = onSnapshot(stakeRef, (snapshot) => {
+            if (snapshot.exists()) {
+                setStakingInfo(snapshot.data());
             }
-        } catch (err) {
-            console.error('Failed to fetch staking info:', err);
-        }
+        }, (err) => {
+            console.error('Staking info error:', err);
+        });
+
+        return () => unsubscribe();
     }, [xUsername]);
 
-    const fetchGlobalStats = useCallback(async () => {
-        try {
-            const response = await fetch(`${API}/api/staking/stats`);
-            if (response.ok) {
-                const data = await response.json();
-                setGlobalStats(data.stats);
-            }
-        } catch (err) {
-            console.error('Failed to fetch staking stats:', err);
-        }
-    }, []);
-
+    // Read global staking stats from Firebase
     useEffect(() => {
-        fetchStakingInfo();
-        fetchGlobalStats();
-        const interval = setInterval(() => {
-            fetchStakingInfo();
-            fetchGlobalStats();
-        }, 60000);
-        return () => clearInterval(interval);
-    }, [fetchStakingInfo, fetchGlobalStats]);
+        const fetchStats = async () => {
+            try {
+                const statsDoc = await getDoc(doc(db, 'meta', 'staking_stats'));
+                if (statsDoc.exists()) {
+                    setGlobalStats(statsDoc.data());
+                } else {
+                    // Build stats from stakes collection
+                    const stakesSnap = await getDocs(collection(db, 'stakes'));
+                    let totalStaked = 0;
+                    let totalStakers = 0;
+                    stakesSnap.forEach(doc => {
+                        const data = doc.data();
+                        if (data.staked_amount > 0) {
+                            totalStaked += data.staked_amount;
+                            totalStakers++;
+                        }
+                    });
+                    setGlobalStats({ total_staked: totalStaked, total_stakers: totalStakers });
+                }
+            } catch (err) {
+                console.error('Global staking stats error:', err);
+            }
+        };
+        fetchStats();
+    }, []);
 
     const handleStake = async () => {
         const amount = parseFloat(stakeAmount);
@@ -50,20 +60,18 @@ export function StakingPanel({ xUsername, walletAddress, walletBalance }) {
 
         setLoading(true);
         try {
-            const response = await fetch(`${API}/api/stake`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: xUsername,
-                    wallet: walletAddress,
-                    amount
-                })
-            });
-            if (response.ok) {
-                setStakeAmount('');
-                fetchStakingInfo();
-                fetchGlobalStats();
-            }
+            const stakeRef = doc(db, 'stakes', xUsername.toLowerCase());
+            const existing = await getDoc(stakeRef);
+            const currentAmount = existing.exists() ? (existing.data().staked_amount || 0) : 0;
+
+            await setDoc(stakeRef, {
+                staked_amount: currentAmount + amount,
+                wallet: walletAddress,
+                username: xUsername,
+                updated_at: new Date()
+            }, { merge: true });
+
+            setStakeAmount('');
         } catch (err) {
             console.error('Staking failed:', err);
         } finally {
@@ -76,18 +84,11 @@ export function StakingPanel({ xUsername, walletAddress, walletBalance }) {
 
         setLoading(true);
         try {
-            const response = await fetch(`${API}/api/unstake`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: xUsername,
-                    wallet: walletAddress
-                })
-            });
-            if (response.ok) {
-                fetchStakingInfo();
-                fetchGlobalStats();
-            }
+            const stakeRef = doc(db, 'stakes', xUsername.toLowerCase());
+            await setDoc(stakeRef, {
+                staked_amount: 0,
+                updated_at: new Date()
+            }, { merge: true });
         } catch (err) {
             console.error('Unstake failed:', err);
         } finally {

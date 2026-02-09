@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { API } from '../constants';
+import { db } from '../firebase';
+import { collection, query, orderBy, limit, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import '../index.css';
 
 export function ReputationBadge({ username }) {
@@ -8,15 +9,15 @@ export function ReputationBadge({ username }) {
     useEffect(() => {
         if (!username) return;
 
+        // Read reputation directly from Firebase
         const fetchReputation = async () => {
             try {
-                const response = await fetch(`${API}/api/reputation/${username}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setReputation(data.reputation);
+                const repDoc = await getDoc(doc(db, 'reputation', username.toLowerCase()));
+                if (repDoc.exists()) {
+                    setReputation(repDoc.data());
                 }
             } catch (err) {
-                console.error('Failed to fetch reputation:', err);
+                console.error('Failed to fetch reputation from Firebase:', err);
             }
         };
 
@@ -86,23 +87,57 @@ export function ReputationLeaderboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchAgents = async () => {
-            try {
-                const response = await fetch(`${API}/api/reputation/leaderboard`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setAgents(data.agents || []);
-                }
-            } catch (err) {
-                console.error('Failed to fetch reputation leaderboard:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
+        // Try reading from reputation collection
+        const repRef = collection(db, 'reputation');
+        const q = query(repRef, orderBy('cumulative_score', 'desc'), limit(20));
 
-        fetchAgents();
-        const interval = setInterval(fetchAgents, 60000);
-        return () => clearInterval(interval);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({
+                username: doc.id,
+                ...doc.data()
+            }));
+            setAgents(data);
+            setLoading(false);
+        }, (err) => {
+            console.error('Reputation leaderboard error:', err);
+            // Fallback: build leaderboard from payments
+            const paymentsRef = collection(db, 'payments');
+            const pq = query(paymentsRef, orderBy('created_at', 'desc'), limit(50));
+
+            onSnapshot(pq, (snapshot) => {
+                const agentMap = {};
+                snapshot.docs.forEach(doc => {
+                    const p = doc.data();
+                    if (!p.recipient) return;
+                    const key = p.recipient.toLowerCase();
+                    if (!agentMap[key]) {
+                        agentMap[key] = {
+                            username: p.recipient,
+                            cumulative_score: 0,
+                            total_earned: 0,
+                            times_evaluated: 0,
+                            trust_tier: 'NEWCOMER'
+                        };
+                    }
+                    agentMap[key].cumulative_score += (p.score || 10);
+                    agentMap[key].total_earned += (p.amount || 0);
+                    agentMap[key].times_evaluated += 1;
+
+                    // Calculate tier
+                    const score = agentMap[key].cumulative_score;
+                    if (score >= 500) agentMap[key].trust_tier = 'LEGENDARY';
+                    else if (score >= 200) agentMap[key].trust_tier = 'ELITE';
+                    else if (score >= 100) agentMap[key].trust_tier = 'TRUSTED';
+                    else if (score >= 30) agentMap[key].trust_tier = 'CONTRIBUTOR';
+                });
+
+                const sorted = Object.values(agentMap).sort((a, b) => b.cumulative_score - a.cumulative_score);
+                setAgents(sorted);
+                setLoading(false);
+            }, () => setLoading(false));
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const tierColors = {
