@@ -86,18 +86,68 @@ export function AgentDiscoveryFeed({ discoveries = [] }) {
                 <div className="terminal-body" style={{ fontSize: '0.8rem' }}>
                     {displayData.map((item, i) => (
                         <div key={item.id || i} style={{ marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #222' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <div>
-                                    <span style={{ color: 'var(--phosphor)', fontWeight: 700 }}>{item.agent}</span>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.25rem' }}>{item.action}</p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
+                                    {/* Profile Image */}
+                                    {item.profile_image_url ? (
+                                        <img
+                                            src={item.profile_image_url}
+                                            alt={item.agent}
+                                            style={{
+                                                width: '36px', height: '36px', borderRadius: '50%',
+                                                border: '2px solid var(--phosphor)', flexShrink: 0,
+                                                objectFit: 'cover'
+                                            }}
+                                        />
+                                    ) : (
+                                        <div style={{
+                                            width: '36px', height: '36px', borderRadius: '50%',
+                                            background: 'var(--bg-surface, #1a1a1a)', border: '2px solid var(--phosphor)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontSize: '0.8rem', flexShrink: 0
+                                        }}>🤖</div>
+                                    )}
+
+                                    <div style={{ minWidth: 0 }}>
+                                        {/* Agent Name + Links */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                            <a
+                                                href={item.x_url || `https://x.com/${(item.agent || '').replace('@', '')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ color: 'var(--phosphor)', fontWeight: 700, textDecoration: 'none' }}
+                                            >
+                                                {item.agent}
+                                            </a>
+                                            {item.website && (
+                                                <a href={item.website} target="_blank" rel="noopener noreferrer"
+                                                    style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textDecoration: 'none', opacity: 0.7 }}>
+                                                    🔗 website
+                                                </a>
+                                            )}
+                                        </div>
+
+                                        {/* Bio */}
+                                        {item.bio && (
+                                            <p style={{
+                                                color: 'var(--text-muted)', fontSize: '0.6rem', marginTop: '2px',
+                                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px'
+                                            }}>
+                                                {item.bio}
+                                            </p>
+                                        )}
+
+                                        <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '0.25rem' }}>{item.action}</p>
+                                    </div>
                                 </div>
+
                                 <span style={{
                                     color: item.status === 'REWARDED' ? 'var(--phosphor)' : 'var(--hazard)',
-                                    fontSize: '0.65rem'
+                                    fontSize: '0.65rem', flexShrink: 0
                                 }}>{item.status}</span>
                             </div>
                             {item.score && (
-                                <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem', fontSize: '0.7rem' }}>
+                                <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem', fontSize: '0.7rem', paddingLeft: '46px' }}>
                                     <span>SCORE: <span style={{ color: 'var(--text-main)' }}>{item.score}/100</span></span>
                                     {item.reward && <span style={{ color: 'var(--text-main)' }}>+{item.reward.toFixed(2)} USDC</span>}
                                 </div>

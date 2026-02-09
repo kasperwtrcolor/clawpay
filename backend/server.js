@@ -1381,7 +1381,7 @@ async function scanHashtagsForAgents() {
         `&max_results=10` +
         `&tweet.fields=author_id,created_at,text` +
         `&expansions=author_id` +
-        `&user.fields=username`;
+        `&user.fields=username,profile_image_url,description,url`;
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` }
@@ -1400,16 +1400,24 @@ async function scanHashtagsForAgents() {
       const users = {};
       if (data.includes?.users) {
         for (const u of data.includes.users) {
-          users[u.id] = u.username.toLowerCase();
+          users[u.id] = {
+            username: u.username.toLowerCase(),
+            profile_image_url: u.profile_image_url || null,
+            description: u.description || null,
+            url: u.url || null
+          };
         }
       }
 
       for (const tweet of data.data) {
-        const username = users[tweet.author_id];
-        if (username && !seenUsernames.has(username) && username !== BOT_HANDLE) {
-          seenUsernames.add(username);
+        const userInfo = users[tweet.author_id];
+        if (userInfo && !seenUsernames.has(userInfo.username) && userInfo.username !== BOT_HANDLE) {
+          seenUsernames.add(userInfo.username);
           discoveredAgents.push({
-            username: username,
+            username: userInfo.username,
+            profile_image_url: userInfo.profile_image_url,
+            bio: userInfo.description,
+            website: userInfo.url,
             tweet_id: tweet.id,
             tweet_text: tweet.text,
             source: 'hashtag',
@@ -1587,6 +1595,10 @@ async function runScheduledTweetCheck() {
             status: 'REWARDED',
             skill: skill.name,
             tweet_id: result.tweet_id,
+            profile_image_url: result.profile_image_url || null,
+            bio: result.bio || null,
+            website: result.website || null,
+            x_url: `https://x.com/${result.recipient}`,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
           });
 

@@ -159,29 +159,67 @@ export function AgentDiscoveryFeed() {
           {agents.map(agent => (
             <div key={agent.username} className="inset-panel" style={{ padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <a
-                      href={`https://x.com/${agent.username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mono"
-                      style={{ fontWeight: 900, fontSize: '0.85rem', color: 'var(--text-primary)', textDecoration: 'none' }}
-                    >
-                      @{agent.username}
-                    </a>
-                    {agent.is_agent && (
-                      <span className="mono" style={{
-                        fontSize: '0.5rem', padding: '2px 6px',
-                        background: 'var(--glow)', color: '#000', fontWeight: 900
-                      }}>
-                        AI_AGENT
-                      </span>
-                    )}
-                  </div>
+                <div style={{ display: 'flex', gap: '12px', flex: 1, minWidth: 0 }}>
+                  {/* Profile Image */}
+                  {agent.profile_image_url ? (
+                    <img
+                      src={agent.profile_image_url}
+                      alt={agent.username}
+                      style={{
+                        width: '42px', height: '42px', borderRadius: '50%',
+                        border: '2px solid var(--glow, #00ff88)', flexShrink: 0,
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '42px', height: '42px', borderRadius: '50%',
+                      background: 'var(--bg-surface, #1a1a1a)', border: '2px solid var(--glow, #00ff88)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '1rem', flexShrink: 0
+                    }}>🤖</div>
+                  )}
 
-                  <div className="mono" style={{ fontSize: '0.65rem', opacity: 0.6, marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {agent.reason || 'Evaluating...'}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                      <a
+                        href={`https://x.com/${agent.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mono"
+                        style={{ fontWeight: 900, fontSize: '0.85rem', color: 'var(--text-primary)', textDecoration: 'none' }}
+                      >
+                        @{agent.username}
+                      </a>
+                      {agent.is_agent && (
+                        <span className="mono" style={{
+                          fontSize: '0.5rem', padding: '2px 6px',
+                          background: 'var(--glow)', color: '#000', fontWeight: 900
+                        }}>
+                          AI_AGENT
+                        </span>
+                      )}
+                      {agent.website && (
+                        <a href={agent.website} target="_blank" rel="noopener noreferrer"
+                          className="mono" style={{ fontSize: '0.5rem', color: 'var(--text-muted)', textDecoration: 'none' }}>
+                          🔗 SITE
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Bio */}
+                    {agent.bio && (
+                      <div className="mono" style={{
+                        fontSize: '0.6rem', opacity: 0.5, marginBottom: '6px',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      }}>
+                        {agent.bio}
+                      </div>
+                    )}
+
+                    <div className="mono" style={{ fontSize: '0.65rem', opacity: 0.6, marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {agent.reason || 'Evaluating...'}
+                    </div>
                   </div>
 
                   {getScoreBar(agent.score || 0)}
