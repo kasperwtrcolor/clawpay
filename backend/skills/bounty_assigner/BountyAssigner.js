@@ -33,7 +33,7 @@ export const BountyAssigner = {
         const actions = [];
 
         // Process each discovered agent
-        for (const agent of discoveredAgents.slice(0, 3)) { // Limit to 3 per cycle
+        for (const agent of discoveredAgents.slice(0, 1)) { // Limit to 1 per cycle
             try {
                 console.log(`🔍 BOUNTY_ASSIGNER: Analyzing @${agent.username}...`);
 

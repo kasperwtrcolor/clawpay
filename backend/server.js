@@ -121,6 +121,45 @@ setTimeout(() => {
   console.log(`📅 Tweet scanner scheduled every ${SCAN_INTERVAL_MS / 60000} minutes`);
 }, 2000);
 
+// Auto-archive old bounties (72 hours)
+async function archiveExpiredBounties() {
+  try {
+    const cutoffDate = new Date(Date.now() - 72 * 60 * 60 * 1000); // 72 hours ago
+    const openBounties = await bountiesCollection
+      .where('status', '==', 'open')
+      .get();
+
+    let archivedCount = 0;
+    for (const doc of openBounties.docs) {
+      const bounty = doc.data();
+      const createdAt = bounty.created_at?.toDate?.() || new Date(bounty.created_at);
+
+      if (createdAt < cutoffDate) {
+        await bountiesCollection.doc(doc.id).update({
+          status: 'expired',
+          expired_at: new Date(),
+          expire_reason: 'Bounty not completed within 72 hours'
+        });
+        archivedCount++;
+        console.log(`⏰ Expired bounty: ${bounty.title}`);
+      }
+    }
+
+    if (archivedCount > 0) {
+      console.log(`🗂️ Auto-archived ${archivedCount} expired bounties`);
+    }
+  } catch (e) {
+    console.error("Bounty auto-archive error:", e.message);
+  }
+}
+
+// Run auto-archive every 6 hours
+setTimeout(() => {
+  archiveExpiredBounties();
+  setInterval(archiveExpiredBounties, 6 * 60 * 60 * 1000);
+  console.log("📅 Bounty auto-archive scheduled every 6 hours");
+}, 5000);
+
 // ===== HELPERS =====
 async function upsertMeta(key, value) {
   await metaCollection.doc(key).set({ value: String(value) }, { merge: true });
@@ -1985,6 +2024,85 @@ app.post("/api/admin/moltbook/request-email-verification", async (req, res) => {
     });
   } catch (e) {
     console.error("/api/admin/moltbook/request-email-verification error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Admin: Post directly to Moltbook
+app.post("/api/admin/moltbook/post", async (req, res) => {
+  try {
+    const { submolt, title, content } = req.body;
+    const apiKey = process.env.MOLTBOOK_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({ success: false, error: "MOLTBOOK_API_KEY not configured" });
+    }
+
+    if (!submolt || !title || !content) {
+      return res.status(400).json({ success: false, error: "submolt, title, and content required" });
+    }
+
+    // Post to Moltbook
+    const createResponse = await fetch('https://www.moltbook.com/api/v1/posts', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ submolt, title, content })
+    });
+
+    const createData = await createResponse.json();
+    console.log("Moltbook post response:", createData);
+
+    if (!createData.success) {
+      return res.json({ success: false, moltbook_response: createData });
+    }
+
+    // Handle verification if required
+    if (createData.verification_required && createData.verification) {
+      const challenge = createData.verification.challenge;
+      console.log("Moltbook verification challenge:", challenge);
+
+      // Simple math solver
+      const clean = challenge.replace(/[^a-zA-Z0-9\s.,+-]/g, ' ').replace(/\s+/g, ' ').toLowerCase();
+      const numbers = {
+        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
+        'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
+        'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13,
+        'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17,
+        'eighteen': 18, 'nineteen': 19, 'twenty': 20
+      };
+
+      const extractedNumbers = [];
+      for (const [word, value] of Object.entries(numbers)) {
+        if (clean.includes(word)) extractedNumbers.push(value);
+      }
+
+      let answer = extractedNumbers.reduce((a, b) => a + b, 0);
+      if (clean.includes('multiply') || clean.includes('times')) {
+        answer = extractedNumbers.reduce((a, b) => a * b, 1);
+      }
+
+      const verifyResponse = await fetch('https://www.moltbook.com/api/v1/verify', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          verification_code: createData.verification.code,
+          answer: answer.toFixed(2)
+        })
+      });
+
+      const verifyData = await verifyResponse.json();
+      return res.json({ success: verifyData.success, moltbook_response: verifyData });
+    }
+
+    res.json({ success: true, moltbook_response: createData });
+  } catch (e) {
+    console.error("/api/admin/moltbook/post error:", e);
     res.status(500).json({ success: false, error: e.message });
   }
 });
