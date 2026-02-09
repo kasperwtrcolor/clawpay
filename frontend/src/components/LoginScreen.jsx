@@ -55,7 +55,7 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                     <a href="https://www.moltbook.com/u/ClawPay_Agent" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-primary)', fontSize: '1.4rem' }} title="Moltbook">
                         🦞
                     </a>
-                    <button onClick={() => window.location.href = 'https://clawpayagent.fun/bounties'} className="btn" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>
+                    <button onClick={onLogin} className="btn" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>
                         BOUNTIES
                     </button>
                     <button onClick={onLogin} className="btn btn-primary" style={{ padding: '10px 24px', fontSize: '0.8rem' }}>

@@ -1910,4 +1910,47 @@ app.post("/api/admin/openclaw/approve/:handle", async (req, res) => {
   }
 });
 
+// Admin: Archive generic bounties by title pattern
+app.post("/api/admin/bounties/archive-generic", async (req, res) => {
+  try {
+    // Archive bounties with generic patterns
+    const genericPatterns = [
+      'comparison guide',
+      'comparison report',
+      'defi protocol',
+      'analysis report',
+      'market analysis'
+    ];
+
+    const allBounties = await bountiesCollection.where('status', '==', 'open').get();
+    let archivedCount = 0;
+
+    for (const doc of allBounties.docs) {
+      const bounty = doc.data();
+      const titleLower = (bounty.title || '').toLowerCase();
+
+      const isGeneric = genericPatterns.some(pattern => titleLower.includes(pattern));
+
+      if (isGeneric) {
+        await bountiesCollection.doc(doc.id).update({
+          status: 'archived',
+          archived_at: new Date(),
+          archive_reason: 'Generic bounty - cleared during cleanup'
+        });
+        archivedCount++;
+        console.log(`📦 Archived generic bounty: ${bounty.title}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      archived_count: archivedCount,
+      message: `Archived ${archivedCount} generic bounties`
+    });
+  } catch (e) {
+    console.error("/api/admin/bounties/archive-generic error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 app.listen(PORT, () => console.log(`🚀 CLAW backend listening on ${PORT}`));
