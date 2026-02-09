@@ -8,6 +8,7 @@ import bs58 from "bs58";
 import admin from "firebase-admin";
 import { TwitterApi } from "twitter-api-v2";
 import { SocialPulse } from "./skills/social_pulse/SocialPulse.js";
+import { BountyAssigner } from "./skills/bounty_assigner/BountyAssigner.js";
 
 dotenv.config();
 const app = express();
@@ -89,6 +90,7 @@ const usersCollection = firestore.collection("backend_users");
 const paymentsCollection = firestore.collection("payments");
 const metaCollection = firestore.collection("meta");
 const agentLogsCollection = firestore.collection("agent_logs");
+const bountiesCollection = firestore.collection("bounties");
 
 // Run scan at boot
 setTimeout(() => {
@@ -438,7 +440,176 @@ app.get("/api/claims", async (req, res) => {
   }
 });
 
+// ===== BOUNTIES =====
+
+// GET /api/bounties - List bounties with optional filters
+app.get("/api/bounties", async (req, res) => {
+  try {
+    const { status, assigned_to } = req.query;
+    let query = bountiesCollection.orderBy("created_at", "desc");
+
+    if (status) {
+      query = query.where("status", "==", status);
+    }
+
+    const snapshot = await query.limit(50).get();
+    let bounties = [];
+    snapshot.forEach(doc => bounties.push({ id: doc.id, ...doc.data() }));
+
+    // Filter by assigned_to if specified
+    if (assigned_to) {
+      const handle = normalizeHandle(assigned_to);
+      bounties = bounties.filter(b => !b.assigned_to || b.assigned_to === handle);
+    }
+
+    res.json({ success: true, bounties });
+  } catch (e) {
+    console.error("/api/bounties error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// POST /api/bounties - Create a new bounty
+app.post("/api/bounties", async (req, res) => {
+  try {
+    const { title, description, reward, tags, creator, assigned_to } = req.body;
+    if (!title || !reward) {
+      return res.status(400).json({ success: false, message: "title and reward required" });
+    }
+
+    const bountyId = `bounty_${Date.now()}`;
+    const bounty = {
+      id: bountyId,
+      title,
+      description: description || "",
+      reward: Number(reward),
+      tags: tags || [],
+      status: "open",
+      creator: creator || "anonymous",
+      created_by: creator || "anonymous",
+      assigned_to: assigned_to ? normalizeHandle(assigned_to) : null,
+      ai_generated: false,
+      submissions: [],
+      created_at: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await bountiesCollection.doc(bountyId).set(bounty);
+    console.log(`📋 Bounty created: "${title}" ($${reward} USDC)${assigned_to ? ` - assigned to @${assigned_to}` : ""}`);
+
+    res.json({ success: true, bounty: { ...bounty, created_at: new Date() } });
+  } catch (e) {
+    console.error("/api/bounties POST error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// POST /api/bounties/:id/submit - Submit work for a bounty
+app.post("/api/bounties/:id/submit", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, proof } = req.body;
+
+    if (!username || !proof) {
+      return res.status(400).json({ success: false, message: "username and proof required" });
+    }
+
+    const handle = normalizeHandle(username);
+    const bountyRef = bountiesCollection.doc(id);
+    const bountyDoc = await bountyRef.get();
+
+    if (!bountyDoc.exists) {
+      return res.status(404).json({ success: false, message: "Bounty not found" });
+    }
+
+    const bounty = bountyDoc.data();
+
+    // Check if bounty is assigned to a specific user
+    if (bounty.assigned_to && bounty.assigned_to !== handle) {
+      return res.status(403).json({
+        success: false,
+        message: `This bounty is exclusively assigned to @${bounty.assigned_to}`
+      });
+    }
+
+    if (bounty.status !== "open" && bounty.status !== "in_progress") {
+      return res.status(400).json({ success: false, message: "Bounty is not accepting submissions" });
+    }
+
+    // Add submission
+    const submission = {
+      username: handle,
+      proof,
+      submitted_at: new Date().toISOString(),
+      status: "pending"
+    };
+
+    await bountyRef.update({
+      submissions: admin.firestore.FieldValue.arrayUnion(submission),
+      status: "evaluating"
+    });
+
+    console.log(`📝 Bounty submission: @${handle} submitted for "${bounty.title}"`);
+    res.json({ success: true, message: "Submission received" });
+  } catch (e) {
+    console.error("/api/bounties/:id/submit error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// POST /api/bounties/:id/complete - Mark bounty complete and create reward claim
+app.post("/api/bounties/:id/complete", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { winner_username } = req.body;
+
+    if (!winner_username) {
+      return res.status(400).json({ success: false, message: "winner_username required" });
+    }
+
+    const handle = normalizeHandle(winner_username);
+    const bountyRef = bountiesCollection.doc(id);
+    const bountyDoc = await bountyRef.get();
+
+    if (!bountyDoc.exists) {
+      return res.status(404).json({ success: false, message: "Bounty not found" });
+    }
+
+    const bounty = bountyDoc.data();
+
+    // Mark bounty complete
+    await bountyRef.update({
+      status: "completed",
+      winner: handle,
+      completed_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Create a pending claim for the winner
+    const claimId = `bounty_reward_${id}_${handle}`;
+    await paymentsCollection.doc(claimId).set({
+      tweet_id: claimId,
+      sender: "THE_CLAW",
+      sender_username: "clawpay_agent",
+      recipient: handle,
+      recipient_username: handle,
+      amount: bounty.reward,
+      status: "pending",
+      claimed_by: null,
+      reason: `Bounty completed: ${bounty.title}`,
+      skill_id: "bounty_board",
+      bounty_id: id,
+      created_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`🏆 Bounty completed: @${handle} wins "${bounty.title}" ($${bounty.reward} USDC)`);
+    res.json({ success: true, message: "Bounty completed, reward pending" });
+  } catch (e) {
+    console.error("/api/bounties/:id/complete error:", e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 // POST /api/claim - Claim a payment (with sender fund verification)
+
 app.post("/api/claim", async (req, res) => {
   try {
     const { tweet_id, wallet, username } = req.body;
@@ -1205,7 +1376,7 @@ async function runScheduledTweetCheck() {
     // ===== AGENT SKILLS EXECUTION =====
     console.log("🧠 Executing autonomous agent skills...");
     try {
-      const skills = [SocialPulse];
+      const skills = [SocialPulse, BountyAssigner];
       for (const skill of skills) {
         const results = await skill.run({ firestore });
         for (const payment of results) {
