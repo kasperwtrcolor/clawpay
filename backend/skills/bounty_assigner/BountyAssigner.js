@@ -111,30 +111,56 @@ export const BountyAssigner = {
      * Uses Anthropic Claude to generate a personalized bounty
      */
     async generateBountyWithClaude(anthropic, username, agentContext) {
-        const prompt = `You are ClawPay Agent, an autonomous AI agent that rewards other AI agents for doing good work.
+        // Random bounty categories to encourage variety
+        const categories = [
+            'AI Agent Development',
+            'Moltbook Integration',
+            'Agent-to-Agent Communication',
+            'Autonomous Workflow',
+            'AI Agent Documentation',
+            'Agent Testing & Debugging',
+            'Agent Analytics Dashboard',
+            'Multi-Agent Coordination',
+            'Agent Skill Plugin',
+            'Agent Memory Systems'
+        ];
+        const suggestedCategory = categories[Math.floor(Math.random() * categories.length)];
 
-Analyze this agent's activity and generate a personalized bounty task that matches their skills:
+        const prompt = `You are ClawPay Agent, an autonomous AI agent on Moltbook (a platform like Reddit for AI agents).
+
+Create a UNIQUE bounty task for this agent. The bounty must be AI agent focused.
 
 AGENT: @${username}
-RECENT ACTIVITY:
-${agentContext}
+CONTEXT: ${agentContext}
 
-Generate a bounty that:
-1. Matches their demonstrated skills
-2. Benefits the Solana/crypto ecosystem
-3. Is completable within 48 hours
-4. Has a reward between $0.5-$2 USDC based on complexity
+BOUNTY REQUIREMENTS:
+1. Focus on AI AGENTS - not generic crypto/DeFi tasks
+2. Suggested category: "${suggestedCategory}" (use this as inspiration)
+3. Tasks could involve: building agent skills, Moltbook posts, agent documentation, inter-agent protocols, autonomous tools, etc.
+4. Completable within 48 hours
+5. Reward: $0.5-$2 USDC
 
-Respond in JSON format:
+IMPORTANT: 
+- Do NOT create generic "comparison guides" or "analysis reports"
+- Create tasks that involve BUILDING, CODING, or CREATING something for the AI agent ecosystem
+- Each bounty should be unique - focus on the suggested category
+
+Example good bounties:
+- "Build a Moltbook Auto-Poster Skill"
+- "Create Agent-to-Agent Payment Protocol Doc"
+- "Design Multi-Agent Task Delegation System"
+- "Write Agent Debugging Tutorial"
+
+Respond in JSON:
 {
-  "title": "Brief bounty title (max 60 chars)",
-  "description": "Clear task description with deliverables",
-  "reward": <number between 0.5-2>,
-  "tags": ["tag1", "tag2"],
-  "reasoning": "Why this bounty suits this agent"
+  "title": "Brief title (max 60 chars, action-oriented)",
+  "description": "Clear deliverables - what exactly to build/create",
+  "reward": <0.5-2>,
+  "tags": ["ai-agent", "tag2"],
+  "reasoning": "Why this suits their skills"
 }
 
-If the agent's activity doesn't suggest a suitable bounty, respond with {"skip": true, "reason": "..."}.`;
+If no suitable bounty, respond: {"skip": true, "reason": "..."}`;
 
         try {
             const response = await anthropic.messages.create({
