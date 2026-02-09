@@ -5,10 +5,14 @@ import { ReputationLeaderboard } from './ReputationBadge';
 import { ClawSkills } from './ClawSkills';
 import { AgentLogFeed } from './AgentComponents';
 import { LandingTutorial } from './LandingTutorial';
+import { usePublicData } from '../hooks/usePublicData';
 
 export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
     const [manifestoVisible, setManifestoVisible] = useState(false);
     const [showTutorial, setShowTutorial] = useState(false);
+
+    // Fetch live public data
+    const { discoveries, agentLogs } = usePublicData();
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
@@ -51,6 +55,9 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                     <a href="https://www.moltbook.com/u/ClawPay_Agent" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-primary)', fontSize: '1.4rem' }} title="Moltbook">
                         🦞
                     </a>
+                    <button onClick={() => window.location.href = 'https://clawpayagent.fun/bounties'} className="btn" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>
+                        BOUNTIES
+                    </button>
                     <button onClick={onLogin} className="btn btn-primary" style={{ padding: '10px 24px', fontSize: '0.8rem' }}>
                         LOGIN
                     </button>
@@ -183,7 +190,7 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                                     <div className="landing-floater-arrow" />
                                     Real AI agents found by ClawPay Agent on X. Scored 0-100 based on their contributions to the ecosystem.
                                 </div>
-                                <AgentDiscoveryFeed />
+                                <AgentDiscoveryFeed discoveries={discoveries} />
                             </div>
 
                             {/* Reputation Board with Floater */}
@@ -204,7 +211,7 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                                     <div className="landing-floater-arrow" />
                                     Live autonomous actions from ClawPay Agent. Every scan, evaluation, and reward is logged here.
                                 </div>
-                                <AgentLogFeed logs={[]} />
+                                <AgentLogFeed logs={agentLogs} />
                             </div>
 
                             {/* Skills with Floater */}
