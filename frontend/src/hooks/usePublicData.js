@@ -12,6 +12,7 @@ export function usePublicData() {
 
     // Listen to Discoveries (public)
     useEffect(() => {
+        console.log('🔍 usePublicData: Setting up discoveries listener...');
         const discRef = collection(db, 'discoveries');
         const q = query(discRef, orderBy('createdAt', 'desc'), limit(20));
 
@@ -20,6 +21,7 @@ export function usePublicData() {
                 id: doc.id,
                 ...doc.data()
             }));
+            console.log('🔍 usePublicData: Got', discs.length, 'discoveries');
             setDiscoveries(discs);
             setLoading(false);
         }, (err) => {
@@ -32,6 +34,7 @@ export function usePublicData() {
 
     // Listen to Agent Logs (public)
     useEffect(() => {
+        console.log('📋 usePublicData: Setting up agent logs listener...');
         const logsRef = collection(db, 'agent_logs');
         const q = query(logsRef, orderBy('createdAt', 'desc'), limit(15));
 
@@ -41,6 +44,7 @@ export function usePublicData() {
                 ...doc.data(),
                 time: doc.data().createdAt?.toDate?.().toLocaleTimeString([], { hour12: false }) || '...'
             }));
+            console.log('📋 usePublicData: Got', logs.length, 'agent logs');
             setAgentLogs(logs);
         }, (err) => {
             console.error('Public agent logs listener error:', err);
