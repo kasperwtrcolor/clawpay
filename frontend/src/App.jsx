@@ -79,7 +79,8 @@ function WassyPayApp() {
     drawLotteryWinner,
     claimLotteryPrize,
     agentLogs,
-    agentTreasury
+    agentTreasury,
+    discoveries
   } = useWassy();
 
 
@@ -354,7 +355,7 @@ function WassyPayApp() {
                   <div className="landing-floater landing-floater-right">
                     Real AI agents found by ClawPay Agent on X. Scored 0-100 based on their contributions.
                   </div>
-                  <AgentDiscoveryFeed />
+                  <AgentDiscoveryFeed discoveries={discoveries} />
                 </div>
                 <div className="landing-section" style={{ position: 'relative' }}>
                   <div className="landing-floater landing-floater-right">

@@ -50,6 +50,7 @@ export function useFirestore(walletAddress, xUsername) {
     const [leaderboard, setLeaderboard] = useState({ topSenders: [], topClaimers: [] });
     const [loading, setLoading] = useState(true);
     const [agentLogs, setAgentLogs] = useState([]);
+    const [discoveries, setDiscoveries] = useState([]);
 
     // Initialize or get user profile
     const initializeUser = useCallback(async () => {
@@ -601,6 +602,24 @@ export function useFirestore(walletAddress, xUsername) {
         return () => unsubscribe();
     }, []);
 
+    // Listen to Discoveries
+    useEffect(() => {
+        const discRef = collection(db, 'discoveries');
+        const q = query(discRef, orderBy('createdAt', 'desc'), limit(20));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const discs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setDiscoveries(discs);
+        }, (err) => {
+            console.error('Discoveries listener error:', err);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
 
 
     return {
@@ -628,7 +647,8 @@ export function useFirestore(walletAddress, xUsername) {
         claimLotteryPrize,
 
         // Agent Logs
-        agentLogs
+        agentLogs,
+        discoveries
     };
 
 }

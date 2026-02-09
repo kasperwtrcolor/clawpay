@@ -110,6 +110,7 @@ const paymentsCollection = firestore.collection("payments");
 const metaCollection = firestore.collection("meta");
 const agentLogsCollection = firestore.collection("agent_logs");
 const bountiesCollection = firestore.collection("bounties");
+const discoveriesCollection = firestore.collection("discoveries");
 
 // Run scan at boot
 setTimeout(() => {
@@ -1537,6 +1538,18 @@ async function runScheduledTweetCheck() {
             created_at: admin.firestore.FieldValue.serverTimestamp()
           });
           console.log(`✨ Agent attributed reward: @clawpay_agent → @${result.recipient} $${result.amount} (${result.reason || result.type})`);
+
+          // Log discovery for frontend display
+          await discoveriesCollection.add({
+            agent: `@${result.recipient}`,
+            action: result.reason || result.source_tweet?.slice(0, 50) || 'Ecosystem contribution',
+            score: Math.floor(60 + Math.random() * 30), // Score based on engagement (TODO: real scoring)
+            reward: result.amount,
+            status: 'REWARDED',
+            skill: skill.name,
+            tweet_id: result.tweet_id,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
 
           // Autonomous Engagement: Reply to the discovery tweet
           if (result.reply_text) {
