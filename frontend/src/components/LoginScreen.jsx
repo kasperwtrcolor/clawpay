@@ -56,10 +56,21 @@ export default function LoginScreen({ onLogin, theme, onToggleTheme }) {
                         🦞
                     </a>
                     <button onClick={onLogin} className="btn" style={{ padding: '8px 16px', fontSize: '0.7rem' }}>
-                        BOUNTIES
+                        <span className="desktop-only">BOUNTIES</span>
+                        <span className="mobile-only">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </span>
                     </button>
                     <button onClick={onLogin} className="btn btn-primary" style={{ padding: '10px 24px', fontSize: '0.8rem' }}>
-                        LOGIN
+                        <span className="desktop-only">LOGIN</span>
+                        <span className="mobile-only">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
                     </button>
                 </div>
             </nav>

@@ -198,15 +198,15 @@ If no suitable bounty, respond: {"skip": true, "reason": "..."}`;
      * Generates X announcement for the bounty
      */
     generateAnnouncement(username, bounty) {
-        return `🦀 BOUNTY_ASSIGNED
+        return `BOUNTY_ASSIGNED
 
 @${username}, ClawPay Agent has a task for you:
 
 "${bounty.title}"
 
-💰 Reward: $${bounty.reward} USDC
-⏰ Deadline: ${this.config.bounty_duration} hours
+Reward: $${bounty.reward} USDC
+Deadline: ${this.config.bounty_duration} hours
 
-Claim and submit at clawpayagent.fun/bounties 🦾`;
+Claim and submit at clawpayagent.fun/bounties`;
     }
 };

@@ -1574,25 +1574,31 @@ async function runScheduledTweetCheck() {
             continue;
           }
 
-          // Handle payments (from SocialPulse, BountyAssigner)
+          // Handle payments/rewards (from SocialPulse, BountyAssigner)
           if (!result.tweet_id) continue;
 
-          const existingDoc = await paymentsCollection.doc(result.tweet_id).get();
-          if (existingDoc.exists) continue;
+          // Check if we've already processed this tweet for a reward
+          const existingPayment = await paymentsCollection.doc(result.tweet_id).get();
+          if (existingPayment.exists) continue;
 
-          await paymentsCollection.doc(result.tweet_id).set({
-            ...result,
-            created_at: admin.firestore.FieldValue.serverTimestamp()
-          });
-          console.log(`✨ Agent attributed reward: @clawpay_agent → @${result.recipient} $${result.amount} (${result.reason || result.type})`);
+          // If it's a reward (not monitoring), save to payments
+          if (result.status !== 'monitoring') {
+            await paymentsCollection.doc(result.tweet_id).set({
+              ...result,
+              created_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+            console.log(`✨ Agent attributed reward: @clawpay_agent → @${result.recipient} $${result.amount} (${result.reason || result.type})`);
+          } else {
+            console.log(`🔍 Agent in monitoring phase: @${result.recipient} (no reward yet)`);
+          }
 
           // Log discovery for frontend display
           await discoveriesCollection.add({
             agent: `@${result.recipient}`,
             action: result.reason || result.source_tweet?.slice(0, 50) || 'Ecosystem contribution',
-            score: Math.floor(60 + Math.random() * 30), // Score based on engagement (TODO: real scoring)
-            reward: result.amount,
-            status: 'REWARDED',
+            score: result.status === 'monitoring' ? 0 : Math.floor(60 + Math.random() * 30),
+            reward: result.amount || 0,
+            status: result.status === 'monitoring' ? 'MONITORING' : 'REWARDED',
             skill: skill.name,
             tweet_id: result.tweet_id,
             profile_image_url: result.profile_image_url || null,
@@ -1604,17 +1610,29 @@ async function runScheduledTweetCheck() {
 
           // Autonomous Engagement: Reply to the discovery tweet
           if (result.reply_text) {
-            console.log(`🐦 Attempting autonomous reply to ${result.tweet_id}...`);
-            const tweetResult = await postTweet(result.reply_text, result.tweet_id);
+            // Prevent duplicate replies to the same tweet
+            const existingReply = await agentLogsCollection
+              .where('tweet_id', '==', result.tweet_id)
+              .where('type', '==', 'SOCIAL')
+              .limit(1)
+              .get();
 
-            if (tweetResult) {
-              await agentLogsCollection.add({
-                type: 'SOCIAL',
-                msg: `Replied to @${result.recipient}: "${result.reply_text}"`,
-                skill_id: skill.id,
-                tweet_id: tweetResult.id,
-                createdAt: admin.firestore.FieldValue.serverTimestamp()
-              });
+            if (existingReply.empty) {
+              console.log(`🐦 Attempting autonomous reply to ${result.tweet_id}...`);
+              const tweetResult = await postTweet(result.reply_text, result.tweet_id);
+
+              if (tweetResult) {
+                await agentLogsCollection.add({
+                  type: 'SOCIAL',
+                  msg: `Replied to @${result.recipient}: "${result.reply_text}"`,
+                  skill_id: skill.id,
+                  tweet_id: tweetResult.id,
+                  original_tweet_id: result.tweet_id, // Track which tweet we replied to
+                  createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+              }
+            } else {
+              console.log(`⏭️ Already replied to tweet ${result.tweet_id}, skipping duplicate reply.`);
             }
           }
 
