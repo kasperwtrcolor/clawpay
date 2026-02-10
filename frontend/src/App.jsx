@@ -13,15 +13,13 @@ import { PendingClaims } from './components/PendingClaims';
 import { PendingOutgoing } from './components/PendingOutgoing';
 import { PaymentHistory } from './components/PaymentHistory';
 import { StatsCard, HowToPayCard, Footer, PaymentTicker, ScanCountdown, TermsModal } from './components/Cards';
-import { LeaderboardModal, AchievementsModal, AdminModal, StatsModal, HistoryModal, ShareSuccessModal, LotteryWinModal } from './components/Modals';
+import { LeaderboardModal, AchievementsModal, AdminModal, StatsModal, HistoryModal, ShareSuccessModal } from './components/Modals';
 import { TutorialOverlay, useTutorial } from './components/TutorialOverlay';
 import { MobileNav } from './components/MobileNav';
 import { ThemeToggle } from './components/ThemeToggle';
 import { ProfilePage } from './components/ProfilePage';
 import { AdminDashboard } from './components/AdminDashboard';
-import { LotteryBanner } from './components/LotteryBanner';
-import { LotteryModal } from './components/LotteryModal';
-import { LotteryPage } from './components/LotteryPage';
+import { ClawSkills } from './components/ClawSkills';
 import { ClawSkills } from './components/ClawSkills';
 import { AgentLogFeed, AgentTreasuryCard } from './components/AgentComponents';
 import { AgentDiscoveryFeed } from './components/AgentDiscoveryFeed';
@@ -68,16 +66,6 @@ function WassyPayApp() {
     recordDailyLogin,
     recordShare,
     userProfile,
-    // Enhanced Lottery
-    currentLottery,
-    lotteryHistory,
-    createLottery,
-    activateLottery,
-    fetchActiveLottery,
-    fetchLotteryHistory,
-    setLotteryPrize: setLotteryPrizeApi,
-    drawLotteryWinner,
-    claimLotteryPrize,
     agentLogs,
     agentTreasury,
     discoveries
@@ -88,14 +76,10 @@ function WassyPayApp() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [showLotteryModal, setShowLotteryModal] = useState(false);
-  const [isClaimingPrize, setIsClaimingPrize] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [showLotteryWinModal, setShowLotteryWinModal] = useState(false);
-  const [lotteryWinAmount, setLotteryWinAmount] = useState(0);
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [lastClaimedPayment, setLastClaimedPayment] = useState(null);
 
@@ -132,12 +116,7 @@ function WassyPayApp() {
     }
   }, [error, success, setSuccess, setError]);
 
-  // Fetch lottery history when navigating to lottery page
-  useEffect(() => {
-    if (currentPage === 'lottery') {
-      fetchLotteryHistory();
-    }
-  }, [currentPage, fetchLotteryHistory]);
+  // Last scan timestamp removed - ScanCountdown now calculates dynamically
 
   // Last scan timestamp removed - ScanCountdown now calculates dynamically
 
@@ -217,7 +196,7 @@ function WassyPayApp() {
       transition: 'background-color 0.3s ease'
     }}>
       {/* Transaction Overlay */}
-      {(loading || isAuthorizing || isClaiming || isClaimingPrize) && (
+      {(loading || isAuthorizing || isClaiming) && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
           zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column'
@@ -240,7 +219,6 @@ function WassyPayApp() {
             <button onClick={() => setCurrentPage('home')} className={`btn ${currentPage === 'home' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>HOME</button>
             <button onClick={() => setCurrentPage('bounties')} className={`btn ${currentPage === 'bounties' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>BOUNTIES</button>
             <button onClick={() => setCurrentPage('explore')} className={`btn ${currentPage === 'explore' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>EXPLORE</button>
-            <button onClick={() => setCurrentPage('lottery')} className={`btn ${currentPage === 'lottery' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>SWARM_DIST</button>
             <button onClick={() => setCurrentPage('profile')} className={`btn ${currentPage === 'profile' ? 'btn-primary' : ''}`} style={{ padding: '8px 16px', fontSize: '0.7rem' }}>PROFILE</button>
           </div>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -399,21 +377,9 @@ function WassyPayApp() {
             </div>
             <BountyBoard xUsername={xUsername} isAdmin={isAdmin} />
           </div>
-        ) : currentPage === 'lottery' ? (
-          <LotteryPage
-            currentLottery={currentLottery}
-            lotteryHistory={lotteryHistory}
-            userWallet={solanaWallet?.address}
-            xUsername={xUsername}
-            agentHandle={AGENT_HANDLE}
-            isClaiming={isClaimingPrize}
-            onClaim={claimLotteryPrize}
-            onBack={() => setCurrentPage('home')}
-          />
         ) : isAdmin && currentPage === 'admin' ? (
           <AdminDashboard
             users={allUsers}
-            currentLottery={currentLottery}
             onClose={() => setCurrentPage('home')}
           />
         ) : null}

@@ -6,7 +6,6 @@ const baseNavItems = [
     { id: 'home', icon: Home, label: 'HOME' },
     { id: 'bounties', icon: Target, label: 'BOUNTY' },
     { id: 'explore', icon: Compass, label: 'EXPLORE' },
-    { id: 'lottery', icon: Ticket, label: 'SWARM' },
     { id: 'profile', icon: User, label: 'PROFILE' },
 ];
 

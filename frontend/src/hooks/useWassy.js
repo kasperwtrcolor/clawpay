@@ -52,16 +52,6 @@ export function useWassy() {
         recordShare,
         fetchLeaderboard,
         ACHIEVEMENTS,
-        // Enhanced Lottery
-        currentLottery,
-        lotteryHistory,
-        createLottery,
-        activateLottery,
-        fetchActiveLottery,
-        fetchLotteryHistory,
-        setLotteryPrize,
-        drawLotteryWinner,
-        claimLotteryPrize: firebaseClaimLotteryPrize,
         agentLogs,
         discoveries
     } = useFirestore(solanaWallet?.address, xUsername);
@@ -484,16 +474,6 @@ export function useWassy() {
         }
     };
 
-    // Wrap lottery claim to refresh balance
-    const claimLotteryPrize = useCallback(async (lotteryId) => {
-        const result = await firebaseClaimLotteryPrize(lotteryId);
-        if (result?.success) {
-            console.log('🔄 Refreshing balance after lottery claim...');
-            await fetchBalance();
-        }
-        return result;
-    }, [firebaseClaimLotteryPrize, fetchBalance]);
-
     // Data fetching effect
     useEffect(() => {
         if (!xUsername) return;
@@ -559,16 +539,6 @@ export function useWassy() {
         recordDailyLogin,
         recordShare,
 
-        // Enhanced Lottery
-        currentLottery,
-        lotteryHistory,
-        createLottery,
-        activateLottery,
-        fetchActiveLottery,
-        fetchLotteryHistory,
-        setLotteryPrize,
-        drawLotteryWinner,
-        claimLotteryPrize,
         agentLogs,
         agentTreasury,
         discoveries,
