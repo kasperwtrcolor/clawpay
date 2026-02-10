@@ -20,7 +20,6 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { ProfilePage } from './components/ProfilePage';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ClawSkills } from './components/ClawSkills';
-import { ClawSkills } from './components/ClawSkills';
 import { AgentLogFeed, AgentTreasuryCard } from './components/AgentComponents';
 import { AgentDiscoveryFeed } from './components/AgentDiscoveryFeed';
 import { BountyBoard } from './components/BountyBoard';
