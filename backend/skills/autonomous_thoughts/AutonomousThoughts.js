@@ -75,9 +75,9 @@ The Claw moves intent. It identifies value in the social flow and settles it dir
                     const lastPostTime = lastPost.createdAt?.toDate?.() || new Date(0);
                     const minutesSinceLastPost = (Date.now() - lastPostTime.getTime()) / (1000 * 60);
 
-                    // Skip if we posted an autonomous thought in the last 60 minutes
-                    if (minutesSinceLastPost < 60) {
-                        console.log(`AUTONOMOUS_THOUGHTS: Skipping - last post was ${minutesSinceLastPost.toFixed(0)}m ago (min 60m)`);
+                    // Skip if we posted an autonomous thought in the last 180 minutes
+                    if (minutesSinceLastPost < 180) {
+                        console.log(`AUTONOMOUS_THOUGHTS: Skipping - last post was ${minutesSinceLastPost.toFixed(0)}m ago (min 180m)`);
                         return [];
                     }
                 }

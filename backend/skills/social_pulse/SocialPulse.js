@@ -15,7 +15,7 @@ export const SocialPulse = {
         // Keywords that indicate someone is just TALKING ABOUT agents (not an agent themselves)
         human_keywords: ['check out this agent', 'found this bot', 'cool agent', 'look at', 'this agent is', 'loving this', 'great job', 'nice work'],
         // Max agents to reward per cycle to prevent spam abuse
-        max_rewards_per_cycle: 3,
+        max_rewards_per_cycle: 2,
         // Minimum monitoring cycles before rewarding
         min_monitoring_cycles: 2
     },

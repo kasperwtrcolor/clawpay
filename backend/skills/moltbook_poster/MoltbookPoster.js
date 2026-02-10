@@ -240,8 +240,8 @@ Just return the JSON, no explanation.`;
                 const lastTime = lastPost.data().timestamp?.toDate?.() || new Date(0);
                 const hoursSinceLastPost = (Date.now() - lastTime.getTime()) / (1000 * 60 * 60);
 
-                // Post every 4 hours
-                if (hoursSinceLastPost < 4) {
+                // Post every 6 hours
+                if (hoursSinceLastPost < 6) {
                     console.log(`📖 MOLTBOOK_POSTER: Last post ${hoursSinceLastPost.toFixed(1)}h ago, skipping`);
                     return [];
                 }

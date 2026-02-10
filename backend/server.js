@@ -23,7 +23,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const BOT_HANDLE = (process.env.BOT_HANDLE || "clawpay_agent").toLowerCase();
 const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN;
-const SCAN_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+const SCAN_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 const ADMIN_WALLET = process.env.ADMIN_WALLET || "6SxLVfFovSjR2LAFcJ5wfT6RFjc8GxsscRekGnLq8BMe";
 const DEBUG_MODE = process.env.DEBUG_MODE === "true"; // Set to true for verbose logging
 
