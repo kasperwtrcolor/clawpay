@@ -538,5 +538,4 @@ export function ShareSuccessModal({ show, onClose, payment, xUsername, theme }) 
     );
 }
 
-    );
-}
+
